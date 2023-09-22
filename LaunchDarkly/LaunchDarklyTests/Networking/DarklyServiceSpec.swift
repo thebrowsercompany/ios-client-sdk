@@ -1,3 +1,4 @@
+#if !os(Linux) && !os(Windows)
 import Foundation
 import Quick
 import Nimble
@@ -771,3 +772,4 @@ private extension String {
         return try? JSONDecoder().decode(LDValue.self, from: data)
     }
 }
+#endif // !os(Linux) && !os(Windows)

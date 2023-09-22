@@ -1,3 +1,4 @@
+#if !os(Linux) && !os(Windows)
 import Foundation
 import Quick
 import Nimble
@@ -314,3 +315,4 @@ extension HTTPURLResponse {
         return [HTTPURLResponse.HeaderKeys.date: DateFormatter.httpUrlHeaderFormatter.string(from: date)]
     }
 }
+#endif // !os(Linux) && !os(Windows)
