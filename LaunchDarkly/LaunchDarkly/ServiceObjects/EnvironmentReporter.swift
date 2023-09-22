@@ -28,7 +28,7 @@ enum OperatingSystem: String {
     OperatingSystem.streamingEnabledOperatingSystems.contains(self)
   }
   static var streamingEnabledOperatingSystems: [OperatingSystem] {
-    [.iOS, .macOS, .tvOS]
+    [.iOS, .macOS, .tvOS, .Windows]
   }
 }
 
