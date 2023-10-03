@@ -38,6 +38,7 @@ public struct LDConfig {
 
     /// The default values set when a LDConfig is initialized
     struct Defaults {
+        static let cacheType: FeatureFlagCacheType = .persistent
         /// The default url for making feature flag requests
         static let baseUrl = URL(string: "https://app.launchdarkly.com")!
         /// The default url for making event reports
@@ -149,6 +150,8 @@ public struct LDConfig {
 
     /// The Mobile key from your [LaunchDarkly Account](app.launchdarkly.com) settings (on the left at the bottom). If you have multiple projects be sure to choose the correct Mobile key.
     public var mobileKey: String
+
+    public var cacheType: FeatureFlagCacheType = Defaults.cacheType
 
     /// The url for making feature flag requests. Do not change unless instructed by LaunchDarkly.
     public var baseUrl: URL = Defaults.baseUrl

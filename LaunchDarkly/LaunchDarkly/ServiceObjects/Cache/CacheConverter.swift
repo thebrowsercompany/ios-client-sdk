@@ -28,9 +28,9 @@ final class CacheConverter: CacheConverting {
     private(set) var deprecatedCaches = [DeprecatedCacheModel: DeprecatedCache]()
 
     init(serviceFactory: ClientServiceCreating, maxCachedUsers: Int) {
-        currentCache = serviceFactory.makeFeatureFlagCache(maxCachedUsers: maxCachedUsers)
+      currentCache = serviceFactory.makeFeatureFlagCache(maxCachedUsers: maxCachedUsers, type: .persistent)
         DeprecatedCacheModel.allCases.forEach { version in
-            deprecatedCaches[version] = serviceFactory.makeDeprecatedCacheModel(version)
+          deprecatedCaches[version] = serviceFactory.makeDeprecatedCacheModel(version, type: .persistent)
         }
     }
 

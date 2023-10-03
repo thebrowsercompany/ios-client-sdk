@@ -3,10 +3,14 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 52;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		72C1FCAC2ACCAAAF00ADDB4F /* InMemoryUserEnvironmentCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72C1FCAB2ACCAAAF00ADDB4F /* InMemoryUserEnvironmentCache.swift */; };
+		72C1FCAD2ACCAAAF00ADDB4F /* InMemoryUserEnvironmentCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72C1FCAB2ACCAAAF00ADDB4F /* InMemoryUserEnvironmentCache.swift */; };
+		72C1FCAE2ACCAAAF00ADDB4F /* InMemoryUserEnvironmentCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72C1FCAB2ACCAAAF00ADDB4F /* InMemoryUserEnvironmentCache.swift */; };
+		72C1FCAF2ACCAAAF00ADDB4F /* InMemoryUserEnvironmentCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72C1FCAB2ACCAAAF00ADDB4F /* InMemoryUserEnvironmentCache.swift */; };
 		830BF933202D188E006DF9B1 /* HTTPURLRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 830BF932202D188E006DF9B1 /* HTTPURLRequest.swift */; };
 		830DB3AC22380A3E00D65D25 /* HTTPHeadersSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 830DB3AB22380A3E00D65D25 /* HTTPHeadersSpec.swift */; };
 		830DB3AE2239B54900D65D25 /* URLResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 830DB3AD2239B54900D65D25 /* URLResponse.swift */; };
@@ -371,6 +375,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		72C1FCAB2ACCAAAF00ADDB4F /* InMemoryUserEnvironmentCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InMemoryUserEnvironmentCache.swift; sourceTree = "<group>"; };
 		830BF932202D188E006DF9B1 /* HTTPURLRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPURLRequest.swift; sourceTree = "<group>"; };
 		830DB3AB22380A3E00D65D25 /* HTTPHeadersSpec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPHeadersSpec.swift; sourceTree = "<group>"; };
 		830DB3AD2239B54900D65D25 /* URLResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLResponse.swift; sourceTree = "<group>"; };
@@ -600,6 +605,7 @@
 			children = (
 				8354AC602241511D00CDE602 /* CacheableEnvironmentFlags.swift */,
 				8354AC6822418C0600CDE602 /* CacheableUserEnvironmentFlags.swift */,
+				72C1FCAB2ACCAAAF00ADDB4F /* InMemoryUserEnvironmentCache.swift */,
 			);
 			path = Cache;
 			sourceTree = "<group>";
@@ -1280,6 +1286,7 @@
 				B4C9D4312489B5FF004A9B03 /* DiagnosticEvent.swift in Sources */,
 				831188462113ADCA00D77CB5 /* LDUser.swift in Sources */,
 				830DB3B12239B54900D65D25 /* URLResponse.swift in Sources */,
+				72C1FCAF2ACCAAAF00ADDB4F /* InMemoryUserEnvironmentCache.swift in Sources */,
 				831188512113ADF400D77CB5 /* ClientServiceFactory.swift in Sources */,
 				831188472113ADCD00D77CB5 /* LDFlagValue.swift in Sources */,
 				831188442113ADC200D77CB5 /* LDConfig.swift in Sources */,
@@ -1336,6 +1343,7 @@
 				831EF35E20655E730001C643 /* Dictionary.swift in Sources */,
 				835E4C54206BDF8D004C6E6C /* EnvironmentReporter.swift in Sources */,
 				8372668E20D4439600BD1088 /* DateFormatter.swift in Sources */,
+				72C1FCAE2ACCAAAF00ADDB4F /* InMemoryUserEnvironmentCache.swift in Sources */,
 				8370DF6E225E40B800F84810 /* DeprecatedCache.swift in Sources */,
 				C43C37E7238DF22C003C1624 /* LDEvaluationDetail.swift in Sources */,
 				831EF36020655E730001C643 /* Data.swift in Sources */,
@@ -1413,6 +1421,7 @@
 				835E1D401F63450A00184DB4 /* ObjcLDConfig.swift in Sources */,
 				83D15230224D92D30054B6D4 /* DeprecatedCacheModelV4.swift in Sources */,
 				83DDBEFE1FA24F9600E428B6 /* Date.swift in Sources */,
+				72C1FCAC2ACCAAAF00ADDB4F /* InMemoryUserEnvironmentCache.swift in Sources */,
 				B4C9D42E2489B5FF004A9B03 /* DiagnosticEvent.swift in Sources */,
 				83B8C2471FE4071F0082B8A9 /* HTTPURLResponse.swift in Sources */,
 				830DB3AE2239B54900D65D25 /* URLResponse.swift in Sources */,
@@ -1535,6 +1544,7 @@
 				83D9EC972062DEAB004D7FA6 /* Thread.swift in Sources */,
 				83D15231224D92D30054B6D4 /* DeprecatedCacheModelV4.swift in Sources */,
 				83D9EC982062DEAB004D7FA6 /* ObjcLDClient.swift in Sources */,
+				72C1FCAD2ACCAAAF00ADDB4F /* InMemoryUserEnvironmentCache.swift in Sources */,
 				B4C9D42F2489B5FF004A9B03 /* DiagnosticEvent.swift in Sources */,
 				83D9EC992062DEAB004D7FA6 /* ObjcLDConfig.swift in Sources */,
 				830DB3AF2239B54900D65D25 /* URLResponse.swift in Sources */,
@@ -1629,6 +1639,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				INFOPLIST_FILE = "$(PROJECT_DIR)/LaunchDarkly/LaunchDarkly/Support/Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				MARKETING_VERSION = 5.4.5;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.launchdarkly.Darkly-macOS";
 				PRODUCT_NAME = LaunchDarkly_macOS;
@@ -1650,6 +1661,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				INFOPLIST_FILE = "$(PROJECT_DIR)/LaunchDarkly/LaunchDarkly/Support/Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				MARKETING_VERSION = 5.4.5;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.launchdarkly.Darkly-macOS";
 				PRODUCT_NAME = LaunchDarkly_macOS;

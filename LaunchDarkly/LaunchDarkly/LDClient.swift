@@ -933,7 +933,7 @@ public class LDClient {
     private init(serviceFactory: ClientServiceCreating, configuration: LDConfig, startUser: LDUser?, completion: (() -> Void)? = nil) {
         self.serviceFactory = serviceFactory
         environmentReporter = self.serviceFactory.makeEnvironmentReporter()
-        flagCache = self.serviceFactory.makeFeatureFlagCache(maxCachedUsers: configuration.maxCachedUsers)
+      flagCache = self.serviceFactory.makeFeatureFlagCache(maxCachedUsers: configuration.maxCachedUsers, type: configuration.cacheType)
         flagStore = self.serviceFactory.makeFlagStore()
         if let userFlagStore = startUser?.flagStore {
             flagStore.replaceStore(newFlags: userFlagStore.featureFlags, completion: nil)
