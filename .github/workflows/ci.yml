@@ -6,7 +6,7 @@ on:
 
 jobs:
   library-windows:
-    name: Windows - Swift 5.9
+    name: Windows - Swift 5.9 - SPM
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
@@ -16,4 +16,14 @@ jobs:
           branch: swift-5.9-release
           tag: 5.9-RELEASE
       - name: Build Windows
+        run: swift test
+
+  library-darwin:
+    name: macOS - Swift 5.9 - SPM
+    runs-on: macos-13
+    steps:
+      - uses: actions/checkout@v3
+      - name: Select Xcode 15.0.1
+        run: sudo xcode-select -s /Applications/Xcode_15.0.1.app
+      - name: Run tests
         run: swift test
