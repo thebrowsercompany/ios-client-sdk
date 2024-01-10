@@ -33,11 +33,11 @@ class SystemCapabilities {
     static var backgroundNotification: Notification.Name? { nil }
     static var foregroundNotification: Notification.Name? { nil }
     static var systemName: String { "Windows" }
-    static var operatingSystem: OperatingSystem { .Windows }
+    static var operatingSystem: OperatingSystem { .windows }
     #elseif os(Linux)
     static var backgroundNotification: Notification.Name? { UIApplication.didEnterBackgroundNotification }
     static var foregroundNotification: Notification.Name? { UIApplication.willEnterForegroundNotification }
     static var systemName: String { "Linux" }
-    static var operatingSystem: OperatingSystem { .Linux }
+    static var operatingSystem: OperatingSystem { .linux }
     #endif
 }
