@@ -4,6 +4,10 @@ import Nimble
 import LDSwiftEventSource
 @testable import LaunchDarkly
 
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
 final class LDClientSpec: QuickSpec {
     struct Constants {
         fileprivate static let alternateMockUrl = URL(string: "https://dummy.alternate.com")!
@@ -132,7 +136,7 @@ final class LDClientSpec: QuickSpec {
         }
     }
 
-    override func spec() {
+    override class func spec() {
         startSpec()
         moveToBackgroundSpec()
         identifySpec()
@@ -151,7 +155,7 @@ final class LDClientSpec: QuickSpec {
         isInitializedSpec()
     }
 
-    private func startSpec() {
+    private class func startSpec() {
         describe("start") {
             startSpec(withTimeout: false)
         }
@@ -181,7 +185,7 @@ final class LDClientSpec: QuickSpec {
         }
     }
 
-    private func startSpec(withTimeout: Bool) {
+    private class func startSpec(withTimeout: Bool) {
         var testContext: TestContext!
 
         context("when configured to start online") {
@@ -371,7 +375,7 @@ final class LDClientSpec: QuickSpec {
         }
     }
 
-    func startCompletionSpec() {
+    class func startCompletionSpec() {
         var testContext: TestContext!
         var completed = false
         var didTimeOut: Bool? = nil
@@ -448,21 +452,21 @@ final class LDClientSpec: QuickSpec {
                 it("does complete without timeout") {
                     testContext.start(completion: startCompletion)
                     testContext.onSyncComplete?(.flagCollection(FeatureFlagCollection([:])))
-                    expect(completed).toEventually(beTrue(), timeout: DispatchTimeInterval.seconds(2))
+                    expect(completed).toEventually(beTrue(), timeout: .seconds(2))
                 }
                 it("does complete with timeout") {
                     waitUntil(timeout: .seconds(3)) { done in
                         testContext.start(timeOut: 5.0, timeOutCompletion: startTimeoutCompletion(done))
                         testContext.onSyncComplete?(.flagCollection(FeatureFlagCollection([:])))
                     }
-                    expect(completed).toEventually(beTrue(), timeout: DispatchTimeInterval.seconds(2))
+                    expect(completed).toEventually(beTrue(), timeout: .seconds(2))
                     expect(didTimeOut) == false
                 }
             }
         }
     }
 
-    func moveToBackgroundSpec() {
+    class func moveToBackgroundSpec() {
         describe("moveToBackground") {
             var testContext: TestContext!
             context("when configured to allow background updates") {
@@ -553,7 +557,7 @@ final class LDClientSpec: QuickSpec {
         }
     }
 
-    private func identifySpec() {
+    private class func identifySpec() {
         describe("identify") {
             it("when the client is online") {
                 let testContext = TestContext(startOnline: true)
@@ -651,7 +655,7 @@ final class LDClientSpec: QuickSpec {
         }
     }
 
-    private func setOnlineSpec() {
+    private class func setOnlineSpec() {
         describe("setOnline") {
             it("set online when the client is offline") {
                 let testContext = TestContext()
@@ -726,7 +730,7 @@ final class LDClientSpec: QuickSpec {
         }
     }
 
-    private func closeSpec() {
+    private class func closeSpec() {
         describe("stop") {
             it("when started and online") {
                 let testContext = TestContext(startOnline: true)
@@ -756,7 +760,7 @@ final class LDClientSpec: QuickSpec {
         }
     }
 
-    private func trackEventSpec() {
+    private class func trackEventSpec() {
         describe("track event") {
             it("records a custom event") {
                 let testContext = TestContext()
@@ -779,7 +783,7 @@ final class LDClientSpec: QuickSpec {
         }
     }
 
-    private func variationSpec() {
+    private class func variationSpec() {
         describe("variation") {
             var testContext: TestContext!
             beforeEach {
@@ -836,10 +840,12 @@ final class LDClientSpec: QuickSpec {
         }
     }
 
-    private func observeSpec() {
+    private class func observeSpec() {
+        final class TestObserver {}
         var testContext: TestContext!
         var mockNotifier: FlagChangeNotifyingMock!
         var callCount: Int = 0
+        var testObserver: TestObserver!
         describe("observe") {
             beforeEach {
                 testContext = TestContext()
@@ -847,68 +853,69 @@ final class LDClientSpec: QuickSpec {
                 mockNotifier = FlagChangeNotifyingMock()
                 testContext.subject.flagChangeNotifier = mockNotifier
                 callCount = 0
+                testObserver = TestObserver()
             }
             it("observe") {
-                testContext.subject.observe(key: "test-key", owner: self) { _ in callCount += 1 }
+                testContext.subject.observe(key: "test-key", owner: testObserver) { _ in callCount += 1 }
                 let receivedObserver = mockNotifier.addFlagChangeObserverReceivedObserver
                 expect(mockNotifier.addFlagChangeObserverCallCount) == 1
                 expect(receivedObserver?.flagKeys) == ["test-key"]
-                expect(receivedObserver?.owner) === self
+                expect(receivedObserver?.owner) === testObserver
                 receivedObserver?.flagChangeHandler?(LDChangedFlag(key: "", oldValue: nil, newValue: nil))
                 expect(callCount) == 1
             }
             it("observeKeys") {
-                testContext.subject.observe(keys: ["test-key"], owner: self) { _ in callCount += 1 }
+                testContext.subject.observe(keys: ["test-key"], owner: testObserver) { _ in callCount += 1 }
                 let receivedObserver = mockNotifier.addFlagChangeObserverReceivedObserver
                 expect(mockNotifier.addFlagChangeObserverCallCount) == 1
                 expect(receivedObserver?.flagKeys) == ["test-key"]
-                expect(receivedObserver?.owner) === self
+                expect(receivedObserver?.owner) === testObserver
                 let changedFlags = ["test-key": LDChangedFlag(key: "", oldValue: nil, newValue: nil)]
                 receivedObserver?.flagCollectionChangeHandler?(changedFlags)
                 expect(callCount) == 1
             }
             it("observeAll") {
-                testContext.subject.observeAll(owner: self) { _ in callCount += 1 }
+                testContext.subject.observeAll(owner: testObserver) { _ in callCount += 1 }
                 let receivedObserver = mockNotifier.addFlagChangeObserverReceivedObserver
                 expect(mockNotifier.addFlagChangeObserverCallCount) == 1
                 expect(receivedObserver?.flagKeys) == LDFlagKey.anyKey
-                expect(receivedObserver?.owner) === self
+                expect(receivedObserver?.owner) === testObserver
                 let changedFlags = ["test-key": LDChangedFlag(key: "", oldValue: nil, newValue: nil)]
                 receivedObserver?.flagCollectionChangeHandler?(changedFlags)
                 expect(callCount) == 1
             }
             it("observeFlagsUnchanged") {
-                testContext.subject.observeFlagsUnchanged(owner: self) { callCount += 1 }
+                testContext.subject.observeFlagsUnchanged(owner: testObserver) { callCount += 1 }
                 let receivedObserver = mockNotifier.addFlagsUnchangedObserverReceivedObserver
                 expect(mockNotifier.addFlagsUnchangedObserverCallCount) == 1
-                expect(receivedObserver?.owner) === self
+                expect(receivedObserver?.owner) === testObserver
                 receivedObserver?.flagsUnchangedHandler()
                 expect(callCount) == 1
             }
             it("observeConnectionModeChanged") {
-                testContext.subject.observeCurrentConnectionMode(owner: self) { _ in callCount += 1 }
+                testContext.subject.observeCurrentConnectionMode(owner: testObserver) { _ in callCount += 1 }
                 let receivedObserver = mockNotifier.addConnectionModeChangedObserverReceivedObserver
                 expect(mockNotifier.addConnectionModeChangedObserverCallCount) == 1
-                expect(receivedObserver?.owner) === self
+                expect(receivedObserver?.owner) === testObserver
                 receivedObserver?.connectionModeChangedHandler(ConnectionInformation.ConnectionMode.offline)
                 expect(callCount) == 1
             }
             it("stopObserving") {
-                testContext.subject.stopObserving(owner: self)
+                testContext.subject.stopObserving(owner: testObserver)
                 expect(mockNotifier.removeObserverCallCount) == 1
-                expect(mockNotifier.removeObserverReceivedOwner) === self
+                expect(mockNotifier.removeObserverReceivedOwner) === testObserver
             }
         }
     }
 
-    private func onSyncCompleteSpec() {
+    private class func onSyncCompleteSpec() {
         describe("on sync complete") {
             onSyncCompleteSuccessSpec()
             onSyncCompleteErrorSpec()
         }
     }
 
-    private func onSyncCompleteSuccessSpec() {
+    private class func onSyncCompleteSuccessSpec() {
         it("flag collection") {
             self.onSyncCompleteSuccessReplacingFlagsSpec()
         }
@@ -920,7 +927,7 @@ final class LDClientSpec: QuickSpec {
         }
     }
 
-    private func onSyncCompleteSuccessReplacingFlagsSpec() {
+    private class func onSyncCompleteSuccessReplacingFlagsSpec() {
         let testContext = TestContext(startOnline: true)
         testContext.start()
         testContext.subject.flagChangeNotifier = ClientServiceMockFactory().makeFlagChangeNotifier()
@@ -946,7 +953,7 @@ final class LDClientSpec: QuickSpec {
         expect(testContext.changeNotifierMock.notifyObserversReceivedArguments?.oldFlags) == [:]
     }
 
-    func onSyncCompleteStreamingPatchSpec() {
+    class func onSyncCompleteStreamingPatchSpec() {
         let stubFlags = FlagMaintainingMock.stubStoredItems()
         let testContext = TestContext(startOnline: true).withCached(flags: stubFlags.featureFlags)
         testContext.start()
@@ -973,7 +980,7 @@ final class LDClientSpec: QuickSpec {
         expect(testContext.changeNotifierMock.notifyObserversReceivedArguments?.oldFlags == stubFlags.featureFlags).to(beTrue())
     }
 
-    func onSyncCompleteDeleteFlagSpec() {
+    class func onSyncCompleteDeleteFlagSpec() {
         let stubFlags = FlagMaintainingMock.stubStoredItems()
         let testContext = TestContext(startOnline: true).withCached(flags: stubFlags.featureFlags)
         testContext.start()
@@ -1000,7 +1007,7 @@ final class LDClientSpec: QuickSpec {
         expect(testContext.changeNotifierMock.notifyObserversReceivedArguments?.oldFlags == stubFlags.featureFlags).to(beTrue())
     }
 
-    func onSyncCompleteErrorSpec() {
+    class func onSyncCompleteErrorSpec() {
         func runTest(_ ctx: String,
                      _ err: SynchronizingError,
                      testError: @escaping ((ConnectionInformation.LastConnectionFailureReason) -> Void)) {
@@ -1044,7 +1051,7 @@ final class LDClientSpec: QuickSpec {
         runTest("there was a non-NSError error", .streamError(DummyError())) { _ in }
     }
 
-    private func runModeSpec() {
+    private class func runModeSpec() {
         describe("didEnterBackground notification") {
             context("after starting client") {
                 context("when online") {
@@ -1303,7 +1310,7 @@ final class LDClientSpec: QuickSpec {
         #endif
     }
 
-    private func streamingModeSpec() {
+    private class func streamingModeSpec() {
         var testContext: TestContext!
 
         describe("flag synchronizer streaming mode") {
@@ -1322,7 +1329,7 @@ final class LDClientSpec: QuickSpec {
         }
     }
 
-    private func flushSpec() {
+    private class func flushSpec() {
         describe("flush") {
             it("tells the event reporter to report events") {
                 let testContext = TestContext()
@@ -1333,7 +1340,7 @@ final class LDClientSpec: QuickSpec {
         }
     }
 
-    private func allFlagsSpec() {
+    private class func allFlagsSpec() {
         let stubFlags = FlagMaintainingMock.stubStoredItems()
         describe("allFlags") {
             it("returns all non-null flag values from store") {
@@ -1350,7 +1357,7 @@ final class LDClientSpec: QuickSpec {
         }
     }
 
-    private func connectionInformationSpec() {
+    private class func connectionInformationSpec() {
         describe("ConnectionInformation") {
             it("when client was started in foreground") {
                 let testContext = TestContext(startOnline: true)
@@ -1372,7 +1379,7 @@ final class LDClientSpec: QuickSpec {
         }
     }
 
-    private func variationDetailSpec() {
+    private class func variationDetailSpec() {
         describe("variationDetail") {
             it("when flag doesn't exist") {
                 let testContext = TestContext()
@@ -1385,7 +1392,7 @@ final class LDClientSpec: QuickSpec {
         }
     }
 
-    private func isInitializedSpec() {
+    private class func isInitializedSpec() {
         describe("isInitialized") {
             it("when client was started but no flag update") {
                 let testContext = TestContext(startOnline: true)
@@ -1410,7 +1417,7 @@ final class LDClientSpec: QuickSpec {
                 testContext.start()
                 testContext.onSyncComplete?(.flagCollection(FeatureFlagCollection([:])))
 
-                expect(testContext.subject.isInitialized).toEventually(beTrue(), timeout: DispatchTimeInterval.seconds(2))
+                expect(testContext.subject.isInitialized).toEventually(beTrue(), timeout: .seconds(2))
 
                 testContext.subject.close()
                 expect(testContext.subject.isInitialized) == false

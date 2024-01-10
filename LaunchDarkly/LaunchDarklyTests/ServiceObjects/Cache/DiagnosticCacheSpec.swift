@@ -4,7 +4,7 @@ import Nimble
 @testable import LaunchDarkly
 
 final class DiagnosticCacheSpec: QuickSpec {
-    override func spec() {
+    override class func spec() {
         context("DiagnosticCache") {
             getCurrentStatsAndResetSpec()
             incrementDroppedEventCountSpec()
@@ -15,7 +15,7 @@ final class DiagnosticCacheSpec: QuickSpec {
         }
     }
 
-    private func getCurrentStatsAndResetSpec() {
+    private class func getCurrentStatsAndResetSpec() {
         context("getCurrentStatsAndReset") {
             beforeEach {
                 self.clearStoredCaches()
@@ -61,7 +61,7 @@ final class DiagnosticCacheSpec: QuickSpec {
         }
     }
 
-    private func incrementDroppedEventCountSpec() {
+    private class func incrementDroppedEventCountSpec() {
         context("incrementDroppedEventCount") {
             beforeEach {
                 self.clearStoredCaches()
@@ -103,7 +103,7 @@ final class DiagnosticCacheSpec: QuickSpec {
         }
     }
 
-    private func recordEventsInLastBatchSpec() {
+    private class func recordEventsInLastBatchSpec() {
         context("recordEventsInLastBatch") {
             beforeEach {
                 self.clearStoredCaches()
@@ -128,7 +128,7 @@ final class DiagnosticCacheSpec: QuickSpec {
         }
     }
 
-    private func addStreamInitSpec() {
+    private class func addStreamInitSpec() {
         context("addStreamInit") {
             beforeEach {
                 self.clearStoredCaches()
@@ -195,7 +195,7 @@ final class DiagnosticCacheSpec: QuickSpec {
         }
     }
 
-    private func lastStatsSpec() {
+    private class func lastStatsSpec() {
         context("lastStats") {
             beforeEach {
                 self.clearStoredCaches()
@@ -239,7 +239,7 @@ final class DiagnosticCacheSpec: QuickSpec {
         }
     }
 
-    private func backingStoreSpec() {
+    private class func backingStoreSpec() {
         context("backing store") {
             it("stores to expected key") {
                 self.clearStoredCaches()
@@ -255,7 +255,7 @@ final class DiagnosticCacheSpec: QuickSpec {
         }
     }
 
-    private func clearStoredCaches() {
+    private class func clearStoredCaches() {
         let defaults = UserDefaults.standard
         defaults.dictionaryRepresentation().keys.filter {
             $0.starts(with: "com.launchdarkly.DiagnosticCache.diagnosticData")
