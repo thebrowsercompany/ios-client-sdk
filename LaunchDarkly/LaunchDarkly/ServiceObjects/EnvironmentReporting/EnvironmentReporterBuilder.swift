@@ -36,6 +36,8 @@ class EnvironmentReporterBuilder {
             reporters.append(MacOSEnvironmentReporter())
             #elseif os(tvOS)
             reporters.append(TVOSEnvironmentReporter())
+            #elseif os(Windows)
+            reporters.append(WindowsEnvironmentReporter())
             #endif
         }
 
