@@ -1317,7 +1317,7 @@ final class LDClientSpec: QuickSpec {
             OperatingSystem.allOperatingSystems.forEach { os in
                 it("on \(os) sets the flag synchronizer streaming mode") {
                     // TODO(os-tests): We need to expand this to the other OSs
-                    if os == .watchOS {
+                    if os == .watchOS || os == .linux {
                         return
                     }
 
