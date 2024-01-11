@@ -2,6 +2,15 @@
 
 import PackageDescription
 
+// Temporarily needed to keep the Windows SPM build under the symbol count.
+let linkType: Product.Library.LibraryType = {
+    #if os(Windows)
+    .dynamic
+    #else
+    .static
+    #endif
+}()
+
 let package = Package(
     name: "LaunchDarkly",
     platforms: [
@@ -13,6 +22,7 @@ let package = Package(
     products: [
         .library(
             name: "LaunchDarkly",
+            type: linkType,
             targets: ["LaunchDarkly"]),
     ],
     dependencies: [
