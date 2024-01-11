@@ -20,12 +20,13 @@ let package = Package(
         .package(url: "https://github.com/Quick/Quick.git", .exact("7.3.0")),
         .package(url: "https://github.com/Quick/Nimble.git", .exact("13.0.0")),
         .package(name: "LDSwiftEventSource", url: "https://github.com/LaunchDarkly/swift-eventsource.git", .revisionItem("ac5f18c")),
-        .package(url: "https://github.com/apple/swift-crypto.git", "1.0.0" ..< "3.0.0"),
     ],
     targets: [
         .target(
             name: "LaunchDarkly",
-            dependencies: osSpecificLDDependencies(),
+            dependencies: [
+                .product(name: "LDSwiftEventSource", package: "LDSwiftEventSource"),
+            ],
             path: "LaunchDarkly/LaunchDarkly",
             exclude: osSpecificExcludes()),
         .testTarget(
@@ -50,19 +51,6 @@ func osSpecificLDTestsDependencies() -> [Target.Dependency] {
         .product(name: "OHHTTPStubsSwift", package: "OHHTTPStubs"),
         .product(name: "Quick", package: "Quick"),
         .product(name: "Nimble", package: "Nimble")
-    ]
-    #endif
-}
-
-func osSpecificLDDependencies() -> [Target.Dependency] {
-    #if os(Linux) || os(Windows)
-    [
-        .product(name: "LDSwiftEventSource", package: "LDSwiftEventSource"),
-        .product(name: "Crypto", package: "swift-crypto"),
-    ]
-    #else
-    [
-        .product(name: "LDSwiftEventSource", package: "LDSwiftEventSource"),
     ]
     #endif
 }
