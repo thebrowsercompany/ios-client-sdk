@@ -16,12 +16,18 @@ class WindowsEnvironmentReporter: EnvironmentReporterChainBase {
     return info
   }
 
+  override var manufacturer: String {
+    "unknown"
+  }
+
   override var systemVersion: String {
-    ProcessInfo.processInfo.operatingSystemVersionString
+    let version = ProcessInfo.processInfo.operatingSystemVersion
+
+    return "\(version.majorVersion).\(version.minorVersion).\(version.patchVersion)"
   }
 
   override var osFamily: String {
-    "Microsoft"
+    "Windows"
   }
 
   override var deviceModel: String {
@@ -44,7 +50,6 @@ class WindowsEnvironmentReporter: EnvironmentReporterChainBase {
       default:
       return "unknown"
     }
-
   }
 }
 #endif

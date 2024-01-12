@@ -66,14 +66,10 @@ func osSpecificLDTestsDependencies() -> [Target.Dependency] {
 }
 
 func osSpecificExcludes() -> [String] {
+    var exclusions = ["Support"]
     #if os(Linux) || os(Windows)
-    [
-        "ObjectiveC",
-        "Support",
-    ]
-    #else
-    [
-        "Support"
-    ]
+    exclusions.append("ObjectiveC")
     #endif
+
+    return exclusions
 }

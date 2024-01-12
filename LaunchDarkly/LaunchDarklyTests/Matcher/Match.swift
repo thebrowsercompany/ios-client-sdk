@@ -20,8 +20,7 @@ public enum ToMatchResult {
 public func match() -> Matcher<() -> ToMatchResult> {
     Matcher.define { actualExpression in
         let optActual = try actualExpression.evaluate()
-        guard let actual = optActual
-        else {
+        guard let actual = optActual else {
             return MatcherResult(status: .fail, message: .fail("expected a closure, got <nil>"))
         }
 

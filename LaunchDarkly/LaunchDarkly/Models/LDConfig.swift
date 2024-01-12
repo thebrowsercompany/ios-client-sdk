@@ -35,21 +35,15 @@ public enum LDStreamingMode {
  you can use targeting rules to enable "dark mode" for all customers who are using version 15 or greater, and ensure
  that customers on previous versions don't use the earlier, unfinished version of the feature.
  */
-#if os(Linux) || os(Windows)
+#if !os(Linux) && !os(Windows)
+@objc
+#endif
 public enum AutoEnvAttributes: Int {
-     /// Enables the Auto EnvironmentAttributes functionality.
-    case enabled
-    /// Disables the Auto EnvironmentAttributes functionality.
-    case disabled
-}
-#else
-@objc public enum AutoEnvAttributes: Int {
     /// Enables the Auto EnvironmentAttributes functionality.
     case enabled
     /// Disables the Auto EnvironmentAttributes functionality.
     case disabled
 }
-#endif
 
 typealias MobileKey = String
 

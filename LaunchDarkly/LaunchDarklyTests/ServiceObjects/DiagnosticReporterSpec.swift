@@ -1,3 +1,4 @@
+#if !os(Linux) && !os(Windows)
 import Foundation
 import XCTest
 
@@ -141,3 +142,4 @@ final class DiagnosticReporterSpec: XCTestCase {
         tst.expectNoEvent()
     }
 }
+#endif
