@@ -8,6 +8,7 @@ on:
     branches: [ v11, 'feat/**' ]
     paths-ignore:
       - '**.md'
+  workflow_dispatch:
 
 jobs:
   lint:
@@ -130,6 +131,20 @@ jobs:
           xcode-version: ${{ matrix.xcode-version }}
 
       - uses: ./.github/actions/test-swiftpm
+
+  test-swiftpm-windows:
+    name: Windows - Swift 5.9 - SPM
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Swift
+        uses: compnerd/gha-setup-swift@main
+        with:
+          branch: swift-5.9-release
+          tag: 5.9-RELEASE
+      - name: Run tests
+        run: swift test
 
   contract-tests:
     runs-on: macos-15

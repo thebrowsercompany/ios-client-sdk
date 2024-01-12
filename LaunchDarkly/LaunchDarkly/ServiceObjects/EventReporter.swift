@@ -1,6 +1,10 @@
 import Foundation
 import OSLog
 
+#if os(Linux) || os(Windows)
+import FoundationNetworking
+#endif
+
 typealias EventSyncCompleteClosure = ((SynchronizingError?) -> Void)
 // sourcery: autoMockable
 protocol EventReporting {

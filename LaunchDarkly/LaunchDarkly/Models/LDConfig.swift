@@ -1,6 +1,10 @@
 import Foundation
 import OSLog
 
+#if os(Linux) || os(Windows)
+import FoundationNetworking
+#endif
+
 /// Defines the connection modes the SDK may be configured to use to retrieve feature flag data from LaunchDarkly.
 public enum LDStreamingMode {
     /**
@@ -32,7 +36,10 @@ public enum LDStreamingMode {
  you can use targeting rules to enable "dark mode" for all customers who are using version 15 or greater, and ensure
  that customers on previous versions don't use the earlier, unfinished version of the feature.
  */
-@objc public enum AutoEnvAttributes: Int {
+#if !os(Linux) && !os(Windows)
+@objc
+#endif
+public enum AutoEnvAttributes: Int {
     /// Enables the Auto EnvironmentAttributes functionality.
     case enabled
     /// Disables the Auto EnvironmentAttributes functionality.
@@ -439,8 +446,10 @@ public struct LDConfig {
     /// LaunchDarkly defined minima for selected configurable items
     public let minima: Minima
 
+    #if !os(Linux) && !os(Windows)
     /// An NSObject wrapper for the Swift LDConfig struct. Intended for use in mixed apps when Swift code needs to pass a config into an Objective-C method.
     public var objcLdConfig: ObjcLDConfig { ObjcLDConfig(self) }
+    #endif
 
     /// Initial set of hooks for the client.
     ///

@@ -4,6 +4,10 @@ import Nimble
 import LDSwiftEventSource
 @testable import LaunchDarkly
 
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
 final class FlagSynchronizerSpec: QuickSpec {
     struct Constants {
         fileprivate static let pollingInterval: TimeInterval = 1
@@ -34,7 +38,7 @@ final class FlagSynchronizerSpec: QuickSpec {
         }
     }
 
-    override func spec() {
+    override class func spec() {
         initSpec()
         changeIsOnlineSpec()
         streamingEventSpec()
@@ -42,7 +46,7 @@ final class FlagSynchronizerSpec: QuickSpec {
         flagRequestSpec()
     }
 
-    func initSpec() {
+    class func initSpec() {
         describe("init") {
             it("starts up streaming offline using get flag requests") {
                 let testContext = TestContext(streamingMode: .streaming, useReport: false)
@@ -91,7 +95,7 @@ final class FlagSynchronizerSpec: QuickSpec {
         }
     }
 
-    func changeIsOnlineSpec() {
+    class func changeIsOnlineSpec() {
         describe("change isOnline") {
             var testContext: TestContext!
 
@@ -242,7 +246,7 @@ final class FlagSynchronizerSpec: QuickSpec {
         }
     }
 
-    func streamingEventSpec() {
+    class func streamingEventSpec() {
         describe("streaming events") {
             streamingPingEventSpec()
             streamingPutEventSpec()
@@ -253,7 +257,7 @@ final class FlagSynchronizerSpec: QuickSpec {
         }
     }
 
-    func streamingPingEventSpec() {
+    class func streamingPingEventSpec() {
         var testContext: TestContext!
         context("ping") {
             context("success") {
@@ -264,7 +268,9 @@ final class FlagSynchronizerSpec: QuickSpec {
                             syncResult = result
                             done()
                         }
+                        #if !os(Linux) && !os(Windows)
                         testContext.serviceMock.stubFlagResponse(statusCode: HTTPURLResponse.StatusCodes.ok)
+                        #endif
                         testContext.flagSynchronizer.isOnline = true
                         testContext.providedEventHandler!.sendPing()
                     }
@@ -291,7 +297,9 @@ final class FlagSynchronizerSpec: QuickSpec {
                             }
                             done()
                         }
+                        #if !os(Linux) && !os(Windows)
                         testContext.serviceMock.stubFlagResponse(statusCode: HTTPURLResponse.StatusCodes.ok, badData: true)
+                        #endif
                         testContext.flagSynchronizer.isOnline = true
 
                         testContext.providedEventHandler!.sendPing()
@@ -320,7 +328,9 @@ final class FlagSynchronizerSpec: QuickSpec {
                             }
                             done()
                         }
+                        #if !os(Linux) && !os(Windows)
                         testContext.serviceMock.stubFlagResponse(statusCode: HTTPURLResponse.StatusCodes.internalServerError, responseOnly: true)
+                        #endif
                         testContext.flagSynchronizer.isOnline = true
 
                         testContext.providedEventHandler!.sendPing()
@@ -349,7 +359,9 @@ final class FlagSynchronizerSpec: QuickSpec {
                             }
                             done()
                         }
+                        #if !os(Linux) && !os(Windows)
                         testContext.serviceMock.stubFlagResponse(statusCode: HTTPURLResponse.StatusCodes.internalServerError, errorOnly: true)
+                        #endif
                         testContext.flagSynchronizer.isOnline = true
 
                         testContext.providedEventHandler!.sendPing()
@@ -372,7 +384,7 @@ final class FlagSynchronizerSpec: QuickSpec {
         }
     }
 
-    func streamingPutEventSpec() {
+    class func streamingPutEventSpec() {
         var testContext: TestContext!
         var syncResult: FlagSyncResult?
         context("put") {
@@ -428,7 +440,7 @@ final class FlagSynchronizerSpec: QuickSpec {
         }
     }
 
-    func streamingPatchEventSpec() {
+    class func streamingPatchEventSpec() {
         var testContext: TestContext!
         var syncResult: FlagSyncResult?
         context("patch") {
@@ -486,7 +498,7 @@ final class FlagSynchronizerSpec: QuickSpec {
         }
     }
 
-    func streamingDeleteEventSpec() {
+    class func streamingDeleteEventSpec() {
         var testContext: TestContext!
 
         beforeEach {
@@ -550,7 +562,7 @@ final class FlagSynchronizerSpec: QuickSpec {
         }
     }
 
-    func streamingOtherEventSpec() {
+    class func streamingOtherEventSpec() {
         var syncError: SynchronizingError?
 
         context("other events") {
@@ -795,7 +807,7 @@ final class FlagSynchronizerSpec: QuickSpec {
         }
     }
 
-    private func streamingProcessingSpec() {
+    private class func streamingProcessingSpec() {
         var testContext: TestContext!
         var syncError: SynchronizingError?
 
@@ -880,7 +892,7 @@ final class FlagSynchronizerSpec: QuickSpec {
         }
     }
 
-    func pollingTimerFiresSpec() {
+    class func pollingTimerFiresSpec() {
         describe("polling timer fires") {
             var testContext: TestContext!
 
@@ -927,7 +939,7 @@ final class FlagSynchronizerSpec: QuickSpec {
         }
     }
 
-    func flagRequestSpec() {
+    class func flagRequestSpec() {
         describe("flag request") {
             var testContext: TestContext!
             context("using get method") {
@@ -935,7 +947,9 @@ final class FlagSynchronizerSpec: QuickSpec {
                     it("requests flags using a get request exactly one time") {
                         waitUntil { done in
                             testContext = TestContext(streamingMode: .streaming, useReport: false) { _ in done() }
+                            #if !os(Linux) && !os(Windows)
                             testContext.serviceMock.stubFlagResponse(statusCode: HTTPURLResponse.StatusCodes.ok)
+                            #endif
                             testContext.flagSynchronizer.isOnline = true
 
                             testContext.providedEventHandler!.sendPing()
@@ -951,7 +965,9 @@ final class FlagSynchronizerSpec: QuickSpec {
                             for statusCode in HTTPURLResponse.StatusCodes.nonRetry {
                                 waitUntil { done in
                                     testContext = TestContext(streamingMode: .streaming, useReport: false) { _ in done() }
+                                    #if !os(Linux) && !os(Windows)
                                     testContext.serviceMock.stubFlagResponse(statusCode: statusCode)
+                                    #endif
                                     testContext.flagSynchronizer.isOnline = true
 
                                     testContext.providedEventHandler!.sendPing()
@@ -967,7 +983,9 @@ final class FlagSynchronizerSpec: QuickSpec {
                             for statusCode in HTTPURLResponse.StatusCodes.retry {
                                 waitUntil { done in
                                     testContext = TestContext(streamingMode: .streaming, useReport: false) { _ in done() }
+                                    #if !os(Linux) && !os(Windows)
                                     testContext.serviceMock.stubFlagResponse(statusCode: statusCode)
+                                    #endif
                                     testContext.flagSynchronizer.isOnline = true
 
                                     testContext.providedEventHandler!.sendPing()
@@ -985,7 +1003,9 @@ final class FlagSynchronizerSpec: QuickSpec {
                     it("requests flags using a get request exactly one time") {
                         waitUntil { done in
                             testContext = TestContext(streamingMode: .streaming, useReport: true) { _ in done() }
+                            #if !os(Linux) && !os(Windows)
                             testContext.serviceMock.stubFlagResponse(statusCode: HTTPURLResponse.StatusCodes.ok)
+                            #endif
                             testContext.flagSynchronizer.isOnline = true
 
                             testContext.providedEventHandler!.sendPing()
@@ -1001,7 +1021,9 @@ final class FlagSynchronizerSpec: QuickSpec {
                             for statusCode in HTTPURLResponse.StatusCodes.nonRetry {
                                 waitUntil { done in
                                     testContext = TestContext(streamingMode: .streaming, useReport: true) { _ in done() }
+                                    #if !os(Linux) && !os(Windows)
                                     testContext.serviceMock.stubFlagResponse(statusCode: statusCode)
+                                    #endif
                                     testContext.flagSynchronizer.isOnline = true
 
                                     testContext.providedEventHandler!.sendPing()
@@ -1017,7 +1039,9 @@ final class FlagSynchronizerSpec: QuickSpec {
                             for statusCode in HTTPURLResponse.StatusCodes.retry {
                                 waitUntil { done in
                                     testContext = TestContext(streamingMode: .streaming, useReport: true) { _ in done() }
+                                    #if !os(Linux) && !os(Windows)
                                     testContext.serviceMock.stubFlagResponse(statusCode: statusCode)
+                                    #endif
                                     testContext.flagSynchronizer.isOnline = true
 
                                     testContext.providedEventHandler!.sendPing()
@@ -1045,7 +1069,10 @@ final class FlagSynchronizerSpec: QuickSpec {
                             }
                             done()
                         }
+
+                        #if !os(Linux) && !os(Windows)
                         testContext.serviceMock.stubFlagResponse(statusCode: HTTPURLResponse.StatusCodes.ok)
+                        #endif
 
                         testContext.flagSynchronizer.testMakeFlagRequest()
                     }
