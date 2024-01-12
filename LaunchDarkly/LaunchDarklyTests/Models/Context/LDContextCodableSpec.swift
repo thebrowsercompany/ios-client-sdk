@@ -50,7 +50,11 @@ final class LDContextCodableSpec: XCTestCase {
             let output = try jsonEncoder.encode(context)
             let outputJson = String(data: output, encoding: .utf8)
 
-            XCTAssertEqual(json, outputJson)
+            // ordering of the values in the string is not guaranteed, we should instead serialize the string
+            // back into a context and ensure that it matches the input context.
+            let contextFromOutput = try JSONDecoder().decode(LDContext.self, from: Data(try XCTUnwrap(outputJson).utf8))
+
+            XCTAssertEqual(context, contextFromOutput)
         }
     }
 

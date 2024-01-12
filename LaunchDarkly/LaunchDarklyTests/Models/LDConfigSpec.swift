@@ -1,6 +1,10 @@
 import Foundation
 import XCTest
 
+#if os(Linux) || os(Windows)
+import FoundationNetworking
+#endif
+
 @testable import LaunchDarkly
 
 final class LDConfigSpec: XCTestCase {

@@ -133,7 +133,7 @@ final class FlagChangeNotifierSpec: QuickSpec {
         }
     }
 
-    override func spec() {
+    override class func spec() {
         describe("init") {
             it("no initial observers") {
                 let notifier = FlagChangeNotifier()
@@ -148,7 +148,7 @@ final class FlagChangeNotifierSpec: QuickSpec {
         notifyConnectionSpec()
     }
 
-    private func removeObserverSpec() {
+    private class func removeObserverSpec() {
         describe("removeObserver") {
             var testContext: TestContext!
             var removedOwner: FlagChangeHandlerOwnerMock!
@@ -196,7 +196,7 @@ final class FlagChangeNotifierSpec: QuickSpec {
         }
     }
 
-    private func notifyObserverSpec() {
+    private class func notifyObserverSpec() {
         describe("notifyObservers") {
             var testContext: TestContext!
             beforeEach {
@@ -394,7 +394,7 @@ final class FlagChangeNotifierSpec: QuickSpec {
         }
     }
 
-    private func notifyConnectionSpec() {
+    private class func notifyConnectionSpec() {
         describe("notifyConnectionModeChangedObservers") {
             it("removes and does not notify expired observers") {
                 let testContext = TestContext()

@@ -1,5 +1,10 @@
 import Foundation
 import LDSwiftEventSource
+
+#if os(Linux) || os(Windows)
+import FoundationNetworking
+#endif
+
 @testable import LaunchDarkly
 
 extension EventHandler {

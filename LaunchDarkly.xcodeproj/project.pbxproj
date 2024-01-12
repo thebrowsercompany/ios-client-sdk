@@ -21,6 +21,11 @@
 		3D3AB9462A4F16FE003AECF1 /* ReportingConsts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D3AB9422A4F16FE003AECF1 /* ReportingConsts.swift */; };
 		3D3AB9482A570F3A003AECF1 /* ModifierSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D3AB9472A570F3A003AECF1 /* ModifierSpec.swift */; };
 		3D9A12582A73236800698B8D /* UtilSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D9A12572A73236800698B8D /* UtilSpec.swift */; };
+		72D77ABC2B4F3D0F00B58264 /* LDSwiftEventSource in Frameworks */ = {isa = PBXBuildFile; productRef = 72D77ABB2B4F3D0F00B58264 /* LDSwiftEventSource */; };
+		72D77ABE2B4F3D1500B58264 /* LDSwiftEventSource in Frameworks */ = {isa = PBXBuildFile; productRef = 72D77ABD2B4F3D1500B58264 /* LDSwiftEventSource */; };
+		72D77AC02B4F3D1B00B58264 /* LDSwiftEventSource in Frameworks */ = {isa = PBXBuildFile; productRef = 72D77ABF2B4F3D1B00B58264 /* LDSwiftEventSource */; };
+		72D77AC22B4F3D1E00B58264 /* LDSwiftEventSource in Frameworks */ = {isa = PBXBuildFile; productRef = 72D77AC12B4F3D1E00B58264 /* LDSwiftEventSource */; };
+		72D77AC42B4F3D2400B58264 /* LDSwiftEventSource in Frameworks */ = {isa = PBXBuildFile; productRef = 72D77AC32B4F3D2400B58264 /* LDSwiftEventSource */; };
 		830BF933202D188E006DF9B1 /* HTTPURLRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 830BF932202D188E006DF9B1 /* HTTPURLRequest.swift */; };
 		830DB3AC22380A3E00D65D25 /* HTTPHeadersSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 830DB3AB22380A3E00D65D25 /* HTTPHeadersSpec.swift */; };
 		830DB3AE2239B54900D65D25 /* URLResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 830DB3AD2239B54900D65D25 /* URLResponse.swift */; };
@@ -191,10 +196,6 @@
 		A3047D652A606B6000F568E0 /* IOSEnvironmentReporterSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3047D5E2A606B6000F568E0 /* IOSEnvironmentReporterSpec.swift */; };
 		A3047D662A606B6000F568E0 /* EnvironmentReporterChainBaseSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3047D5F2A606B6000F568E0 /* EnvironmentReporterChainBaseSpec.swift */; };
 		A3047D692A606B6000F568E0 /* ApplicationInfoEnvironmentReporterSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3047D622A606B6000F568E0 /* ApplicationInfoEnvironmentReporterSpec.swift */; };
-		A30EF4ED28C24A9A00CD220E /* LDSwiftEventSource in Frameworks */ = {isa = PBXBuildFile; productRef = A30EF4EC28C24A9A00CD220E /* LDSwiftEventSource */; };
-		A30EF4EF28C24AA400CD220E /* LDSwiftEventSource in Frameworks */ = {isa = PBXBuildFile; productRef = A30EF4EE28C24AA400CD220E /* LDSwiftEventSource */; };
-		A30EF4F128C24AAD00CD220E /* LDSwiftEventSource in Frameworks */ = {isa = PBXBuildFile; productRef = A30EF4F028C24AAD00CD220E /* LDSwiftEventSource */; };
-		A30EF4F328C24AB600CD220E /* LDSwiftEventSource in Frameworks */ = {isa = PBXBuildFile; productRef = A30EF4F228C24AB600CD220E /* LDSwiftEventSource */; };
 		A31088172837DC0400184942 /* Reference.swift in Sources */ = {isa = PBXBuildFile; fileRef = A31088142837DC0400184942 /* Reference.swift */; };
 		A31088182837DC0400184942 /* Reference.swift in Sources */ = {isa = PBXBuildFile; fileRef = A31088142837DC0400184942 /* Reference.swift */; };
 		A31088192837DC0400184942 /* Reference.swift in Sources */ = {isa = PBXBuildFile; fileRef = A31088142837DC0400184942 /* Reference.swift */; };
@@ -486,7 +487,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A30EF4F328C24AB600CD220E /* LDSwiftEventSource in Frameworks */,
+				72D77AC22B4F3D1E00B58264 /* LDSwiftEventSource in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -494,7 +495,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A30EF4F128C24AAD00CD220E /* LDSwiftEventSource in Frameworks */,
+				72D77AC02B4F3D1B00B58264 /* LDSwiftEventSource in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -502,7 +503,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A30EF4ED28C24A9A00CD220E /* LDSwiftEventSource in Frameworks */,
+				72D77ABE2B4F3D1500B58264 /* LDSwiftEventSource in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -510,6 +511,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				72D77AC42B4F3D2400B58264 /* LDSwiftEventSource in Frameworks */,
 				B4903D9E24BD61EF00F087C4 /* Quick in Frameworks */,
 				B4903D9B24BD61D000F087C4 /* Nimble in Frameworks */,
 				B4903D9824BD61B200F087C4 /* OHHTTPStubsSwift in Frameworks */,
@@ -521,7 +523,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A30EF4EF28C24AA400CD220E /* LDSwiftEventSource in Frameworks */,
+				72D77ABC2B4F3D0F00B58264 /* LDSwiftEventSource in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -923,7 +925,7 @@
 			);
 			name = LaunchDarkly_tvOS;
 			packageProductDependencies = (
-				A30EF4F228C24AB600CD220E /* LDSwiftEventSource */,
+				72D77AC12B4F3D1E00B58264 /* LDSwiftEventSource */,
 			);
 			productName = Darkly_tvOS;
 			productReference = 831188382113A16900D77CB5 /* LaunchDarkly_tvOS.framework */;
@@ -947,7 +949,7 @@
 			);
 			name = LaunchDarkly_macOS;
 			packageProductDependencies = (
-				A30EF4F028C24AAD00CD220E /* LDSwiftEventSource */,
+				72D77ABF2B4F3D1B00B58264 /* LDSwiftEventSource */,
 			);
 			productName = Darkly_macOS;
 			productReference = 831EF33B20655D700001C643 /* LaunchDarkly_macOS.framework */;
@@ -971,7 +973,7 @@
 			);
 			name = LaunchDarkly_iOS;
 			packageProductDependencies = (
-				A30EF4EC28C24A9A00CD220E /* LDSwiftEventSource */,
+				72D77ABD2B4F3D1500B58264 /* LDSwiftEventSource */,
 			);
 			productName = Darkly;
 			productReference = 8354EFC21F22491C00C05156 /* LaunchDarkly.framework */;
@@ -997,6 +999,7 @@
 				B4903D9724BD61B200F087C4 /* OHHTTPStubsSwift */,
 				B4903D9A24BD61D000F087C4 /* Nimble */,
 				B4903D9D24BD61EF00F087C4 /* Quick */,
+				72D77AC32B4F3D2400B58264 /* LDSwiftEventSource */,
 			);
 			productName = DarklyTests;
 			productReference = 8354EFCB1F22491C00C05156 /* LaunchDarklyTests.xctest */;
@@ -1020,7 +1023,7 @@
 			);
 			name = LaunchDarkly_watchOS;
 			packageProductDependencies = (
-				A30EF4EE28C24AA400CD220E /* LDSwiftEventSource */,
+				72D77ABB2B4F3D0F00B58264 /* LDSwiftEventSource */,
 			);
 			productName = "Darkly-watchOS";
 			productReference = 83D9EC6B2062DBB7004D7FA6 /* LaunchDarkly_watchOS.framework */;
@@ -1076,7 +1079,7 @@
 				B4903D9624BD61B200F087C4 /* XCRemoteSwiftPackageReference "OHHTTPStubs" */,
 				B4903D9924BD61D000F087C4 /* XCRemoteSwiftPackageReference "Nimble" */,
 				B4903D9C24BD61EF00F087C4 /* XCRemoteSwiftPackageReference "Quick" */,
-				B445A6DE24C0D1CD000BAD6D /* XCRemoteSwiftPackageReference "swift-eventsource" */,
+				72D77ABA2B4F3CFB00B58264 /* XCRemoteSwiftPackageReference "swift-eventsource" */,
 			);
 			productRefGroup = 8354EFC31F22491C00C05156 /* Products */;
 			projectDirPath = "";
@@ -1834,6 +1837,7 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = "$(inherited)";
 				INFOPLIST_FILE = "$(PROJECT_DIR)/LaunchDarkly/LaunchDarklyTests/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.launchdarkly.DarklyTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -1844,6 +1848,7 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = "$(inherited)";
 				INFOPLIST_FILE = "$(PROJECT_DIR)/LaunchDarkly/LaunchDarklyTests/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.launchdarkly.DarklyTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -1957,6 +1962,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		72D77ABA2B4F3CFB00B58264 /* XCRemoteSwiftPackageReference "swift-eventsource" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/brianmichel/swift-eventsource.git";
+			requirement = {
+				branch = "brian/add-windows-support";
+				kind = branch;
+			};
+		};
 		B445A6DE24C0D1CD000BAD6D /* XCRemoteSwiftPackageReference "swift-eventsource" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/LaunchDarkly/swift-eventsource.git";
@@ -1978,7 +1991,7 @@
 			repositoryURL = "https://github.com/Quick/Nimble.git";
 			requirement = {
 				kind = exactVersion;
-				version = 9.2.1;
+				version = 13.0.0;
 			};
 		};
 		B4903D9C24BD61EF00F087C4 /* XCRemoteSwiftPackageReference "Quick" */ = {
@@ -1986,30 +1999,35 @@
 			repositoryURL = "https://github.com/Quick/Quick.git";
 			requirement = {
 				kind = exactVersion;
-				version = 4.0.0;
+				version = 7.3.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		A30EF4EC28C24A9A00CD220E /* LDSwiftEventSource */ = {
+		72D77ABB2B4F3D0F00B58264 /* LDSwiftEventSource */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = B445A6DE24C0D1CD000BAD6D /* XCRemoteSwiftPackageReference "swift-eventsource" */;
+			package = 72D77ABA2B4F3CFB00B58264 /* XCRemoteSwiftPackageReference "swift-eventsource" */;
 			productName = LDSwiftEventSource;
 		};
-		A30EF4EE28C24AA400CD220E /* LDSwiftEventSource */ = {
+		72D77ABD2B4F3D1500B58264 /* LDSwiftEventSource */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = B445A6DE24C0D1CD000BAD6D /* XCRemoteSwiftPackageReference "swift-eventsource" */;
+			package = 72D77ABA2B4F3CFB00B58264 /* XCRemoteSwiftPackageReference "swift-eventsource" */;
 			productName = LDSwiftEventSource;
 		};
-		A30EF4F028C24AAD00CD220E /* LDSwiftEventSource */ = {
+		72D77ABF2B4F3D1B00B58264 /* LDSwiftEventSource */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = B445A6DE24C0D1CD000BAD6D /* XCRemoteSwiftPackageReference "swift-eventsource" */;
+			package = 72D77ABA2B4F3CFB00B58264 /* XCRemoteSwiftPackageReference "swift-eventsource" */;
 			productName = LDSwiftEventSource;
 		};
-		A30EF4F228C24AB600CD220E /* LDSwiftEventSource */ = {
+		72D77AC12B4F3D1E00B58264 /* LDSwiftEventSource */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = B445A6DE24C0D1CD000BAD6D /* XCRemoteSwiftPackageReference "swift-eventsource" */;
+			package = 72D77ABA2B4F3CFB00B58264 /* XCRemoteSwiftPackageReference "swift-eventsource" */;
+			productName = LDSwiftEventSource;
+		};
+		72D77AC32B4F3D2400B58264 /* LDSwiftEventSource */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 72D77ABA2B4F3CFB00B58264 /* XCRemoteSwiftPackageReference "swift-eventsource" */;
 			productName = LDSwiftEventSource;
 		};
 		B445A6E324C0D1E3000BAD6D /* LDSwiftEventSource */ = {

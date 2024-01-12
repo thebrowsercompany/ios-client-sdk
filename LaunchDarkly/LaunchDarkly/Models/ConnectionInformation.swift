@@ -1,5 +1,9 @@
 import Foundation
 
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
 public struct ConnectionInformation: Codable, CustomStringConvertible {
     public enum ConnectionMode: String, Codable {
         case streaming, offline, establishingStreamingConnection, polling

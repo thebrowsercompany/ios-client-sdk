@@ -4,11 +4,11 @@ import Nimble
 @testable import LaunchDarkly
 
 final class ThreadSpec: QuickSpec {
-    override func spec() {
+    override class func spec() {
         performOnMainSpec()
     }
 
-    private func performOnMainSpec() {
+    private class func performOnMainSpec() {
         var runCount = 0
         var ranOnMainThread = false
         describe("performOnMain") {
