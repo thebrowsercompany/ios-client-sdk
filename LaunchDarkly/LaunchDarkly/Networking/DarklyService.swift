@@ -2,7 +2,12 @@ import Foundation
 import LDSwiftEventSource
 
 #if os(Linux) || os(Windows)
-import FoundationNetworking
+import class FoundationNetworking.URLResponse
+import class FoundationNetworking.HTTPURLResponse
+import struct FoundationNetworking.URLRequest
+
+import class FoundationNetworking.URLSessionConfiguration
+import AnyURLSession
 #endif
 
 typealias ServiceResponse = (data: Data?, urlResponse: URLResponse?, error: Error?)
@@ -115,7 +120,7 @@ final class DarklyService: DarklyServiceProvider {
         }
 
         self.session.dataTask(with: request) { [weak self] data, response, error in
-            DispatchQueue.main.async {
+            DispatchQueue.main.async { [weak self] in
                 self?.processEtag(from: (data, response, error))
                 completion?((data, response, error))
             }
