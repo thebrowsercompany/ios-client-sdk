@@ -3,7 +3,12 @@ import LDSwiftEventSource
 import OSLog
 
 #if os(Linux) || os(Windows)
-import FoundationNetworking
+import class FoundationNetworking.URLResponse
+import class FoundationNetworking.HTTPURLResponse
+import struct FoundationNetworking.URLRequest
+
+import class FoundationNetworking.URLSessionConfiguration
+import AnyURLSession
 #endif
 
 // swiftlint:disable:next large_tuple
@@ -120,9 +125,10 @@ final class DarklyService: DarklyServiceProvider {
         }
 
         self.session.dataTask(with: request) { [weak self] data, response, error in
-            DispatchQueue.main.async {
-                self?.processEtag(from: (data: data, urlResponse: response, error: error, etag: self?.flagRequestEtag))
-                completion?((data: data, urlResponse: response, error: error, etag: self?.flagRequestEtag))
+            DispatchQueue.main.async { [weak self] in
+                let etag = self?.flagRequestEtag
+                self?.processEtag(from: (data: data, urlResponse: response, error: error, etag: etag))
+                completion?((data: data, urlResponse: response, error: error, etag: etag))
             }
         }.resume()
     }
