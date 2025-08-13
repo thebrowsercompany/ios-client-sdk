@@ -152,7 +152,7 @@ class FlagSynchronizer: LDFlagSynchronizing, EventHandler {
 
     private func startPolling() {
         guard flagRequestTimer == nil
-        else { return Log.debug(typeName(and: #function) + "aborted. Polling already active.") }
+        else { return os_log("%s aborted. Polling already active.", log: config.logger, type: .debug, typeName(and: #function))
 
         // We should fire right away, unless we know how fresh the cache is and can
         // adjust accordingly.
@@ -164,7 +164,7 @@ class FlagSynchronizer: LDFlagSynchronizing, EventHandler {
             syncQueue.async { [self] in reportSyncComplete(.upToDate) }
         }
 
-        Log.debug(typeName(and: #function))
+        os_log("%s", log: config.logger, type: .debug, typeName(and: #function))
         flagRequestTimer = LDTimer(withTimeInterval: pollingInterval, fireQueue: syncQueue, execute: processTimer)
         makeFlagRequest(isOnline: true)
     }

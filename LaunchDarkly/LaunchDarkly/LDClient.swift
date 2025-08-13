@@ -258,14 +258,14 @@ public class LDClient {
     }
 
     private func didEnterBackground() {
-        Log.debug(typeName(and: #function))
+        os_log("%s", log: config.logger, type: .debug, typeName(and: #function))
         Thread.performOnMain {
             runMode = .background
         }
     }
 
     private func willEnterForeground() {
-        Log.debug(typeName(and: #function))
+        os_log("%s", log: config.logger, type: .debug, typeName(and: #function))
         Thread.performOnMain {
             runMode = .foreground
         }
@@ -736,7 +736,7 @@ public class LDClient {
     }
 
     private func didCloseEventSource() {
-        Log.debug(typeName(and: #function))
+        os_log("%s", log: config.logger, type: .debug, typeName(and: #function))
         self.connectionInformation = ConnectionInformation.lastSuccessfulConnectionCheck(connectionInformation: self.connectionInformation)
     }
 
