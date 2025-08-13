@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 
 #if os(Linux) || os(Windows)
 import FoundationNetworking
@@ -151,8 +152,7 @@ public struct ApplicationInfo: Equatable {
         }
 
         let sanitized = unwrapped.replacingOccurrences(of: " ", with: "-")
-        if let error = validate(sanitized) {
-            Log.debug("Issue validating \(inputName) value \(sanitized). \(error)")
+        if validate(sanitized) != nil {
             return
         }
 
@@ -194,6 +194,9 @@ public struct LDConfig {
         static let eventsUrl = URL(string: "https://mobile.launchdarkly.com")!
         /// The default base url for connecting to streaming service
         static let streamUrl = URL(string: "https://clientstream.launchdarkly.com")!
+
+        /// The default behavior for the SDK is to send events.
+        static let sendEvents = true
 
         /// The default maximum number of events the LDClient can store
         static let eventCapacity = 100
@@ -254,6 +257,16 @@ public struct LDConfig {
 
         /// The default behavior for environment attributes is to not modify any provided context UNLESS the developer specifically opts-in.
         static let autoEnvAttributes: Bool = false
+
+        static let hooks: [Hook] = []
+
+        static let plugins: [Plugin] = []
+
+        /// The default logger for the SDK. Can be overridden to provide customization.
+        static let logger: OSLog = OSLog(subsystem: "com.launchdarkly", category: "ios-client-sdk")
+
+        /// The default behavior for event payload compression.
+        static let enableCompression: Bool = false
     }
 
     /// Constants relevant to setting up an `LDConfig`
@@ -303,6 +316,10 @@ public struct LDConfig {
     public var eventsUrl: URL = Defaults.eventsUrl
     /// The base url for connecting to the streaming service. Do not change unless instructed by LaunchDarkly.
     public var streamUrl: URL = Defaults.streamUrl
+
+    /// Whether to send events back to LaunchDarkly. This differs from {#offline?} in that it affects
+    /// only the sending of client-side events, not streaming or polling for events from the server.
+    public var sendEvents: Bool = Defaults.sendEvents
 
     /// The maximum number of analytics events the LDClient can store. When the LDClient event store reaches the eventCapacity, the SDK discards events until it successfully reports them to LaunchDarkly. (Default: 100)
     public var eventCapacity: Int = Defaults.eventCapacity
@@ -375,6 +392,10 @@ public struct LDConfig {
     /// Enables logging for debugging. (Default: false)
     public var isDebugMode: Bool = Defaults.debugMode
 
+    /// Used by the contract tests to override the default 5 minute polling interval. This should never be used outside
+    /// of the contract tests.
+    internal var ignorePollingMinimum: Bool = false
+
     /// Enables requesting evaluation reasons for all flags. (Default: false)
     public var evaluationReasons: Bool = Defaults.evaluationReasons
 
@@ -406,6 +427,11 @@ public struct LDConfig {
     /// Additional headers that should be added to all HTTP requests from SDK components to LaunchDarkly services
     public var additionalHeaders: [String: String] = [:]
 
+    /// Should the event payload sent to LaunchDarkly use gzip compression. By default this is false to prevent backward breaking compatibility issues with older versions of the relay proxy.
+    ///
+    /// Customers not using the relay proxy are strongly encouraged to enable this feature to reduce egress bandwidth cost.
+    public var enableCompression: Bool = Defaults.enableCompression
+
     /* TODO: find a way to make delegates equatable */
     /// a closure to allow dynamic changes of headers on connect & reconnect
     public var headerDelegate: RequestHeaderTransform?
@@ -414,6 +440,9 @@ public struct LDConfig {
     /// based on application name or version, or on device characteristics including manufacturer, model, operating system, locale, and so on.
     public var autoEnvAttributes: Bool = Defaults.autoEnvAttributes
 
+    /// Configure the logger that will be used by the rest of the SDK.
+    public var logger: OSLog = Defaults.logger
+
     /// LaunchDarkly defined minima for selected configurable items
     public let minima: Minima
 
@@ -421,6 +450,16 @@ public struct LDConfig {
     /// An NSObject wrapper for the Swift LDConfig struct. Intended for use in mixed apps when Swift code needs to pass a config into an Objective-C method.
     public var objcLdConfig: ObjcLDConfig { ObjcLDConfig(self) }
     #endif
+
+    /// Initial set of hooks for the client.
+    ///
+    /// Hooks provide entry points which allow for observation of SDK functions.
+    public var hooks: [Hook] = Defaults.hooks
+
+    /// Initial set of plugins for the client.
+    ///
+    /// Plugins provide a way to extend the functionality of the LaunchDarkly SDK. Each plugin can register hooks
+    public var plugins: [Plugin] = Defaults.plugins
 
     /// A Dictionary of identifying names to unique mobile keys for all environments
     private var mobileKeys: [String: String] {
@@ -472,7 +511,7 @@ public struct LDConfig {
         allowBackgroundUpdates = SystemCapabilities.operatingSystem.isBackgroundEnabled
         _secondaryMobileKeys = Defaults.secondaryMobileKeys
         if mobileKey.isEmpty {
-            Log.debug(typeName(and: #function, appending: ": ") + "mobileKey is empty. The SDK will not operate correctly without a valid mobile key.")
+            os_log("%s mobileKey is empty. The SDK will not operate correctly without a valid mobile key.", log: logger, type: .debug, typeName(and: #function))
         }
     }
 
@@ -495,16 +534,16 @@ public struct LDConfig {
 
     // Determine the effective flag polling interval based on runMode, configured foreground & background polling interval, and minimum foreground & background polling interval.
     func flagPollingInterval(runMode: LDClientRunMode) -> TimeInterval {
-        let pollingInterval = runMode == .foreground ? max(flagPollingInterval, minima.flagPollingInterval) : max(backgroundFlagPollingInterval, minima.backgroundFlagPollingInterval)
-        Log.debug(typeName(and: #function, appending: ": ") + "\(pollingInterval)")
-        return pollingInterval
+        if ignorePollingMinimum {
+            return runMode == .foreground ? flagPollingInterval : backgroundFlagPollingInterval
+        }
+
+        return runMode == .foreground ? max(flagPollingInterval, minima.flagPollingInterval) : max(backgroundFlagPollingInterval, minima.backgroundFlagPollingInterval)
     }
 
     // Determines if the status code is a code that should cause the SDK to retry a failed HTTP Request that used the REPORT method. Retried requests will use the GET method.
     static func isReportRetryStatusCode(_ statusCode: Int) -> Bool {
-        let isRetryStatusCode = LDConfig.flagRetryStatusCodes.contains(statusCode)
-        Log.debug(LDConfig.typeName(and: #function, appending: ": ") + "\(isRetryStatusCode)")
-        return isRetryStatusCode
+        return LDConfig.flagRetryStatusCodes.contains(statusCode)
     }
 }
 
@@ -516,6 +555,7 @@ extension LDConfig: Equatable {
             && lhs.eventsUrl == rhs.eventsUrl
             && lhs.streamUrl == rhs.streamUrl
             && lhs.eventCapacity == rhs.eventCapacity
+            && lhs.sendEvents == rhs.sendEvents
             && lhs.connectionTimeout == rhs.connectionTimeout
             && lhs.eventFlushInterval == rhs.eventFlushInterval
             && lhs.flagPollingInterval == rhs.flagPollingInterval

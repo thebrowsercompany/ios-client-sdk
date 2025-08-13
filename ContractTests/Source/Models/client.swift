@@ -16,6 +16,7 @@ struct Configuration: Content {
     var events: EventParameters?
     var tags: TagParameters?
     var clientSide: ClientSideParameters
+    var hooks: HookParameters?
 }
 
 struct StreamingParameters: Content {
@@ -35,6 +36,7 @@ struct EventParameters: Content {
     var allAttributesPrivate: Bool?
     var globalPrivateAttributes: [String]?
     var flushIntervalMs: Double?
+    var enableGzip: Bool?
 }
 
 struct TagParameters: Content {
@@ -49,4 +51,15 @@ struct ClientSideParameters: Content {
     var evaluationReasons: Bool?
     var useReport: Bool?
     var includeEnvironmentAttributes: Bool?
+}
+
+struct HookParameters: Content {
+    var hooks: [HookParameter]
+}
+
+struct HookParameter: Content {
+    var name: String
+    var callbackUri: String
+    var data: [String: [String: LDValue]]?
+    var errors: [String: LDValue]?
 }

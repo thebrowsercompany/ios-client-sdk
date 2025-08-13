@@ -2,7 +2,7 @@
 Pod::Spec.new do |ld|
 
   ld.name         = "LaunchDarkly"
-  ld.version      = "9.2.1"
+  ld.version      = "9.14.0" # x-release-please-version
   ld.summary      = "iOS SDK for LaunchDarkly"
 
   ld.description  = <<-DESC
@@ -29,12 +29,16 @@ Pod::Spec.new do |ld|
   ld.source       = { :git => ld.homepage + '.git', :tag => ld.version}
 
   ld.source_files = "LaunchDarkly/LaunchDarkly/**/*.{h,m,swift}"
+  ld.resource_bundles = {
+    "#{ld.module_name}_Privacy" => 'LaunchDarkly/LaunchDarkly/PrivacyInfo.xcprivacy'
+  }
 
   ld.requires_arc = true
 
   ld.swift_version = '5.0'
 
   ld.subspec 'Core' do |es|
-    es.dependency 'LDSwiftEventSource', '3.1.1'
+    es.dependency 'LDSwiftEventSource', '3.3.0'
+    es.dependency 'DataCompression', '3.8.0'
   end
 end

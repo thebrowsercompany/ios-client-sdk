@@ -29,16 +29,22 @@ let package = Package(
         .package(url: "https://github.com/AliSoftware/OHHTTPStubs.git", .exact("9.1.0")),
         .package(url: "https://github.com/Quick/Quick.git", .exact("7.3.0")),
         .package(url: "https://github.com/Quick/Nimble.git", .exact("13.0.0")),
+        .package(url: "https://github.com/mattgallagher/CwlPreconditionTesting", .exact("2.1.2")),
         .package(name: "LDSwiftEventSource", url: "https://github.com/thebrowsercompany/swift-eventsource.git", .branchItem("main-bcny")),
+        .package(name: "DataCompression", url: "https://github.com/mw99/DataCompression", .exact("3.8.0"))
     ],
     targets: [
         .target(
             name: "LaunchDarkly",
             dependencies: [
                 .product(name: "LDSwiftEventSource", package: "LDSwiftEventSource"),
+                .product(name: "DataCompression", package: "DataCompression")
             ],
             path: "LaunchDarkly/LaunchDarkly",
-            exclude: osSpecificExcludes()),
+            exclude: osSpecificExcludes(),
+            resources: [
+                .process("PrivacyInfo.xcprivacy")
+            ]),
         .testTarget(
             name: "LaunchDarklyTests",
             dependencies: osSpecificLDTestsDependencies(),
@@ -59,6 +65,7 @@ func osSpecificLDTestsDependencies() -> [Target.Dependency] {
     [
         "LaunchDarkly",
         .product(name: "OHHTTPStubsSwift", package: "OHHTTPStubs"),
+        .product(name: "CwlPreconditionTesting", package: "CwlPreconditionTesting"),
         .product(name: "Quick", package: "Quick"),
         .product(name: "Nimble", package: "Nimble")
     ]

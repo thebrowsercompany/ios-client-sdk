@@ -3,6 +3,12 @@ import LDSwiftEventSource
 @testable import LaunchDarkly
 
 final class ClientServiceMockFactory: ClientServiceCreating {
+    private let config: LDConfig
+
+    init(config: LDConfig) {
+        self.config = config
+    }
+
     var makeKeyedValueCacheReturnValue = KeyedValueCachingMock()
     var makeKeyedValueCacheCallCount = 0
     var makeKeyedValueCacheReceivedCacheKey: String? = nil
@@ -33,15 +39,16 @@ final class ClientServiceMockFactory: ClientServiceCreating {
     }
 
     var makeFlagSynchronizerCallCount = 0
-    var makeFlagSynchronizerReceivedParameters: (streamingMode: LDStreamingMode, pollingInterval: TimeInterval, useReport: Bool, service: DarklyServiceProvider)? = nil
+    var makeFlagSynchronizerReceivedParameters: (streamingMode: LDStreamingMode, pollingInterval: TimeInterval, useReport: Bool, lastUpdated: Date?, service: DarklyServiceProvider)? = nil
     var onFlagSyncComplete: FlagSyncCompleteClosure? = nil
     func makeFlagSynchronizer(streamingMode: LDStreamingMode,
                               pollingInterval: TimeInterval,
                               useReport: Bool,
+                              lastUpdated: Date?,
                               service: DarklyServiceProvider,
                               onSyncComplete: FlagSyncCompleteClosure?) -> LDFlagSynchronizing {
         makeFlagSynchronizerCallCount += 1
-        makeFlagSynchronizerReceivedParameters = (streamingMode, pollingInterval, useReport, service)
+        makeFlagSynchronizerReceivedParameters = (streamingMode, pollingInterval, useReport, lastUpdated, service)
         onFlagSyncComplete = onSyncComplete
 
         let flagSynchronizingMock = LDFlagSynchronizingMock()
@@ -50,8 +57,8 @@ final class ClientServiceMockFactory: ClientServiceCreating {
         return flagSynchronizingMock
     }
 
-    func makeFlagSynchronizer(streamingMode: LDStreamingMode, pollingInterval: TimeInterval, useReport: Bool, service: DarklyServiceProvider) -> LDFlagSynchronizing {
-        makeFlagSynchronizer(streamingMode: streamingMode, pollingInterval: pollingInterval, useReport: useReport, service: service, onSyncComplete: nil)
+    func makeFlagSynchronizer(streamingMode: LDStreamingMode, pollingInterval: TimeInterval, useReport: Bool, lastUpdated: Date?, service: DarklyServiceProvider) -> LDFlagSynchronizing {
+        makeFlagSynchronizer(streamingMode: streamingMode, pollingInterval: pollingInterval, useReport: useReport, lastUpdated: lastUpdated, service: service, onSyncComplete: nil)
     }
 
     var makeFlagChangeNotifierReturnValue: FlagChangeNotifying = FlagChangeNotifyingMock()
@@ -60,18 +67,20 @@ final class ClientServiceMockFactory: ClientServiceCreating {
     }
 
     var makeEventReporterCallCount = 0
+    var makeEventReporterReceivedConfig: LDConfig? = nil
     var makeEventReporterReceivedService: DarklyServiceProvider? = nil
     var onEventSyncComplete: EventSyncCompleteClosure? = nil
-    func makeEventReporter(service: DarklyServiceProvider, onSyncComplete: EventSyncCompleteClosure?) -> EventReporting {
+    func makeEventReporter(config: LDConfig, service: DarklyServiceProvider, onSyncComplete: EventSyncCompleteClosure?) -> EventReporting {
         makeEventReporterCallCount += 1
+        makeEventReporterReceivedConfig = config
         makeEventReporterReceivedService = service
         onEventSyncComplete = onSyncComplete
 
         return EventReportingMock()
     }
 
-    func makeEventReporter(service: DarklyServiceProvider) -> EventReporting {
-        return makeEventReporter(service: service, onSyncComplete: nil)
+    func makeEventReporter(config: LDConfig, service: DarklyServiceProvider) -> EventReporting {
+        return makeEventReporter(config: config, service: service, onSyncComplete: nil)
     }
 
     var makeStreamingProviderCallCount = 0
@@ -98,9 +107,11 @@ final class ClientServiceMockFactory: ClientServiceCreating {
 
     var makeDiagnosticReporterCallCount = 0
     var makeDiagnosticReporterReceivedService: DarklyServiceProvider? = nil
-    func makeDiagnosticReporter(service: DarklyServiceProvider, environmentReporter: EnvironmentReporting) -> DiagnosticReporting {
+    var makeDiagnosticReporterReceivedConfig: LDConfig? = nil
+    func makeDiagnosticReporter(config: LDConfig, service: DarklyServiceProvider, environmentReporter: EnvironmentReporting) -> DiagnosticReporting {
         makeDiagnosticReporterCallCount += 1
         makeDiagnosticReporterReceivedService = service
+        makeDiagnosticReporterReceivedConfig = config
         return DiagnosticReportingMock()
     }
 

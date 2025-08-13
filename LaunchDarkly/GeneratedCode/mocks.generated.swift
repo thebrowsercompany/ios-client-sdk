@@ -244,24 +244,35 @@ final class FeatureFlagCachingMock: FeatureFlagCaching {
         }
     }
 
-    var retrieveFeatureFlagsCallCount = 0
-    var retrieveFeatureFlagsCallback: (() throws -> Void)?
-    var retrieveFeatureFlagsReceivedContextKey: String?
-    var retrieveFeatureFlagsReturnValue: StoredItems?
-    func retrieveFeatureFlags(contextKey: String) -> StoredItems? {
-        retrieveFeatureFlagsCallCount += 1
-        retrieveFeatureFlagsReceivedContextKey = contextKey
-        try! retrieveFeatureFlagsCallback?()
-        return retrieveFeatureFlagsReturnValue
+    var getCachedDataCallCount = 0
+    var getCachedDataCallback: (() throws -> Void)?
+    var getCachedDataReceivedArguments: (cacheKey: String, contextHash: String)?
+    var getCachedDataReturnValue: (items: StoredItems?, etag: String?, lastUpdated: Date?)!
+    func getCachedData(cacheKey: String, contextHash: String) -> (items: StoredItems?, etag: String?, lastUpdated: Date?) {
+        getCachedDataCallCount += 1
+        getCachedDataReceivedArguments = (cacheKey: cacheKey, contextHash: contextHash)
+        try! getCachedDataCallback?()
+        return getCachedDataReturnValue
     }
 
-    var storeFeatureFlagsCallCount = 0
-    var storeFeatureFlagsCallback: (() throws -> Void)?
-    var storeFeatureFlagsReceivedArguments: (storedItems: StoredItems, contextKey: String, lastUpdated: Date)?
-    func storeFeatureFlags(_ storedItems: StoredItems, contextKey: String, lastUpdated: Date) {
-        storeFeatureFlagsCallCount += 1
-        storeFeatureFlagsReceivedArguments = (storedItems: storedItems, contextKey: contextKey, lastUpdated: lastUpdated)
-        try! storeFeatureFlagsCallback?()
+    var getCachedDataLastUpdatedDateCallCount = 0
+    var getCachedDataLastUpdatedDateCallback: (() throws -> Void)?
+    var getCachedDataLastUpdatedDateReceivedArguments: (cacheKey: String, contextHash: String)?
+    var getCachedDataLastUpdatedDateReturnValue: Date?
+    func getCachedDataLastUpdatedDate(cacheKey: String, contextHash: String) -> Date? {
+        getCachedDataLastUpdatedDateCallCount += 1
+        getCachedDataLastUpdatedDateReceivedArguments = (cacheKey: cacheKey, contextHash: contextHash)
+        try! getCachedDataLastUpdatedDateCallback?()
+        return getCachedDataLastUpdatedDateReturnValue
+    }
+
+    var saveCachedDataCallCount = 0
+    var saveCachedDataCallback: (() throws -> Void)?
+    var saveCachedDataReceivedArguments: (storedItems: StoredItems, cacheKey: String, contextHash: String, lastUpdated: Date, etag: String?)?
+    func saveCachedData(_ storedItems: StoredItems, cacheKey: String, contextHash: String, lastUpdated: Date, etag: String?) {
+        saveCachedDataCallCount += 1
+        saveCachedDataReceivedArguments = (storedItems: storedItems, cacheKey: cacheKey, contextHash: contextHash, lastUpdated: lastUpdated, etag: etag)
+        try! saveCachedDataCallback?()
     }
 }
 

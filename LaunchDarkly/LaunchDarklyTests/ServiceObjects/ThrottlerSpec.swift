@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 import Quick
 import Nimble
 @testable import LaunchDarkly
@@ -26,13 +27,13 @@ final class ThrottlerSpec: QuickSpec {
     class func initSpec() {
         describe("init") {
             it("with a maxDelay parameter") {
-                let throttler = Throttler(maxDelay: Constants.maxDelay)
+                let throttler = Throttler(logger: OSLog(subsystem: "com.launchdarkly", category: "tests"), maxDelay: Constants.maxDelay)
                 expect(throttler.maxDelay) == Constants.maxDelay
                 expect(throttler.runAttempts) == -1
                 expect(throttler.workItem).to(beNil())
             }
             it("without a maxDelay parameter") {
-                let throttler = Throttler()
+                let throttler = Throttler(logger: OSLog(subsystem: "com.launchdarkly", category: "tests"))
                 expect(throttler.maxDelay) == Throttler.Constants.defaultDelay
                 expect(throttler.runAttempts) == -1
                 expect(throttler.workItem).to(beNil())
@@ -120,7 +121,7 @@ final class ThrottlerSpec: QuickSpec {
 
     class func maxDelaySpec() {
         it("limits delay to maxDelay") {
-            let throttler = Throttler(maxDelay: 1.0, isDebugBuild: false)
+            let throttler = Throttler(logger: OSLog(subsystem: "com.launchdarkly", category: "tests"), maxDelay: 1.0, isDebugBuild: false)
             (0..<10).forEach { _ in throttler.runThrottled { } }
             let callDate = Date()
             var runDate: Date?

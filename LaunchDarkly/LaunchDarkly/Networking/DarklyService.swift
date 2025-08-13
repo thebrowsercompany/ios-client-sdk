@@ -1,5 +1,7 @@
 import Foundation
 import LDSwiftEventSource
+import OSLog
+import DataCompression
 
 #if os(Linux) || os(Windows)
 import class FoundationNetworking.URLResponse
@@ -10,7 +12,7 @@ import class FoundationNetworking.URLSessionConfiguration
 import AnyURLSession
 #endif
 
-typealias ServiceResponse = (data: Data?, urlResponse: URLResponse?, error: Error?)
+typealias ServiceResponse = (data: Data?, urlResponse: URLResponse?, error: Error?, etag: String?)
 typealias ServiceCompletionHandler = (ServiceResponse) -> Void
 
 // sourcery: autoMockable
@@ -27,7 +29,7 @@ protocol DarklyServiceProvider: AnyObject {
     var diagnosticCache: DiagnosticCaching? { get }
 
     func getFeatureFlags(useReport: Bool, completion: ServiceCompletionHandler?)
-    func clearFlagResponseCache()
+    func resetFlagResponseCache(etag: String?)
     func createEventSource(useReport: Bool, handler: EventHandler, errorHandler: ConnectionErrorHandler?) -> DarklyStreamingProvider
     func publishEventData(_ eventData: Data, _ payloadId: String, completion: ServiceCompletionHandler?)
     func publishDiagnostic<T: DiagnosticEvent & Encodable>(diagnosticEvent: T, completion: ServiceCompletionHandler?)
@@ -58,7 +60,7 @@ final class DarklyService: DarklyServiceProvider {
     var context: LDContext
     let httpHeaders: HTTPHeaders
     let diagnosticCache: DiagnosticCaching?
-    private (set) var serviceFactory: ClientServiceCreating
+    private(set) var serviceFactory: ClientServiceCreating
     private var session: URLSession
     var flagRequestEtag: String?
 
@@ -67,7 +69,7 @@ final class DarklyService: DarklyServiceProvider {
         self.context = context
         self.serviceFactory = serviceFactory
 
-        if !config.mobileKey.isEmpty && !config.diagnosticOptOut {
+        if !config.mobileKey.isEmpty && !config.diagnosticOptOut && config.sendEvents {
             self.diagnosticCache = serviceFactory.makeDiagnosticCache(sdkKey: config.mobileKey)
         } else {
             self.diagnosticCache = nil
@@ -93,17 +95,20 @@ final class DarklyService: DarklyServiceProvider {
 
     // MARK: Feature Flags
 
-    func clearFlagResponseCache() {
-        flagRequestEtag = nil
+    func resetFlagResponseCache(etag: String?) {
+        flagRequestEtag = etag
     }
 
     func getFeatureFlags(useReport: Bool, completion: ServiceCompletionHandler?) {
         guard hasMobileKey(#function) else { return }
         let encoder = JSONEncoder()
         encoder.userInfo[LDContext.UserInfoKeys.includePrivateAttributes] = true
+        encoder.userInfo[LDContext.UserInfoKeys.redactAttributes] = false
+        encoder.outputFormatting = [.sortedKeys]
+
         guard let contextJsonData = try? encoder.encode(context)
         else {
-            Log.debug(typeName(and: #function, appending: ": ") + "Aborting. Unable to create flagRequest.")
+            os_log("%s Aborting. Unable to create flag request.", log: config.logger, type: .debug, typeName(and: #function))
             return
         }
 
@@ -121,8 +126,8 @@ final class DarklyService: DarklyServiceProvider {
 
         self.session.dataTask(with: request) { [weak self] data, response, error in
             DispatchQueue.main.async { [weak self] in
-                self?.processEtag(from: (data, response, error))
-                completion?((data, response, error))
+                self?.processEtag(from: (data: data, urlResponse: response, error: error, etag: self?.flagRequestEtag))
+                completion?((data: data, urlResponse: response, error: error, etag: self?.flagRequestEtag))
             }
         }.resume()
     }
@@ -149,8 +154,8 @@ final class DarklyService: DarklyServiceProvider {
 
     private func processEtag(from serviceResponse: ServiceResponse) {
         guard serviceResponse.error == nil,
-            serviceResponse.urlResponse?.httpStatusCode == HTTPURLResponse.StatusCodes.ok,
-            serviceResponse.data?.jsonDictionary != nil
+              serviceResponse.urlResponse?.httpStatusCode == HTTPURLResponse.StatusCodes.ok,
+              serviceResponse.data?.jsonDictionary != nil
         else {
             if serviceResponse.urlResponse?.httpStatusCode != HTTPURLResponse.StatusCodes.notModified {
                 flagRequestEtag = nil
@@ -167,6 +172,9 @@ final class DarklyService: DarklyServiceProvider {
                            errorHandler: ConnectionErrorHandler?) -> DarklyStreamingProvider {
         let encoder = JSONEncoder()
         encoder.userInfo[LDContext.UserInfoKeys.includePrivateAttributes] = true
+        encoder.userInfo[LDContext.UserInfoKeys.redactAttributes] = false
+        encoder.outputFormatting = [.sortedKeys]
+
         let contextJsonData = try? encoder.encode(context)
 
         var streamRequestUrl = config.streamUrl.appendingPathComponent(StreamRequestPath.meval)
@@ -208,18 +216,28 @@ final class DarklyService: DarklyServiceProvider {
     }
 
     private func doPublish(url: URL, headers: [String: String], body: Data, completion: ServiceCompletionHandler?) {
+        var headers = headers
+
+        var httpBody = body
+        if config.enableCompression {
+            if let compressed = body.gzip() {
+                httpBody = compressed
+                headers.updateValue("gzip", forKey: "Content-Encoding")
+            }
+        }
+
         var request = URLRequest(url: url, ldHeaders: headers, ldConfig: config)
         request.httpMethod = URLRequest.HTTPMethods.post
-        request.httpBody = body
+        request.httpBody = httpBody
 
         session.dataTask(with: request) { data, response, error in
-            completion?((data, response, error))
+            completion?((data: data, urlResponse: response, error: error, etag: nil))
         }.resume()
     }
 
     private func hasMobileKey(_ location: String) -> Bool {
         if config.mobileKey.isEmpty {
-            Log.debug(typeName(and: location, appending: ": ") + "Aborting. No mobile key.")
+            os_log("%s Aborting. No mobile key.", log: config.logger, type: .debug, typeName(and: #function))
         }
         return !config.mobileKey.isEmpty
     }

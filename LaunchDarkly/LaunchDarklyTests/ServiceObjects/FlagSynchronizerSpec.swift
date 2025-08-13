@@ -32,6 +32,7 @@ final class FlagSynchronizerSpec: QuickSpec {
             flagSynchronizer = FlagSynchronizer(streamingMode: streamingMode,
                                                 pollingInterval: Constants.pollingInterval,
                                                 useReport: useReport,
+                                                lastUpdated: nil,
                                                 service: serviceMock,
                                                 onSyncComplete: onSyncComplete)
         }
@@ -114,8 +115,20 @@ final class FlagSynchronizerSpec: QuickSpec {
                     expect(testContext.serviceMock.createdEventSource?.stopCallCount) == 1
                 }
                 it("stops polling") {
-                    testContext = TestContext(streamingMode: .polling, useReport: false)
-                    testContext.flagSynchronizer.isOnline = true
+                    let semaphore = DispatchSemaphore(value: 0)
+
+                    DispatchQueue.global().async {
+                        testContext = TestContext(streamingMode: .polling, useReport: false) { _ in
+                            semaphore.signal()
+                        }
+                        testContext.flagSynchronizer.isOnline = true
+                    }
+
+                    let runLoop = RunLoop.current
+
+                    while semaphore.wait(timeout: .now()) == .timedOut {
+                        runLoop.run(mode: .default, before: .distantFuture)
+                    }
                     testContext.flagSynchronizer.isOnline = false
 
                     expect(testContext.flagSynchronizer.isOnline) == false
@@ -137,8 +150,19 @@ final class FlagSynchronizerSpec: QuickSpec {
                     expect(testContext.serviceMock.createdEventSource?.stopCallCount) == 0
                 }
                 it("starts polling") {
-                    testContext = TestContext(streamingMode: .polling, useReport: false)
-                    testContext.flagSynchronizer.isOnline = true
+                    let semaphore = DispatchSemaphore(value: 0)
+
+                    DispatchQueue.global().async {
+                        testContext = TestContext(streamingMode: .polling, useReport: false) { _ in
+                            semaphore.signal()
+                        }
+                        testContext.flagSynchronizer.isOnline = true
+                    }
+
+                    let runLoop = RunLoop.current
+                    while semaphore.wait(timeout: .now()) == .timedOut {
+                        runLoop.run(mode: .default, before: .distantFuture)
+                    }
 
                     // polling starts by requesting flags
                     expect(testContext.flagSynchronizer.isOnline) == true
@@ -162,9 +186,21 @@ final class FlagSynchronizerSpec: QuickSpec {
                     expect(testContext.serviceMock.createdEventSource?.stopCallCount) == 0
                 }
                 it("does not stop polling") {
-                    testContext = TestContext(streamingMode: .polling, useReport: false)
-                    testContext.flagSynchronizer.isOnline = true
-                    testContext.flagSynchronizer.isOnline = true
+                    let semaphore = DispatchSemaphore(value: 0)
+
+                    DispatchQueue.global().async {
+                        testContext = TestContext(streamingMode: .polling, useReport: false) { _ in
+                            semaphore.signal()
+                        }
+                        testContext.flagSynchronizer.isOnline = true
+                        testContext.flagSynchronizer.isOnline = true
+                    }
+
+                    let runLoop = RunLoop.current
+
+                    while semaphore.wait(timeout: .now()) == .timedOut {
+                        runLoop.run(mode: .default, before: .distantFuture)
+                    }
 
                     // setting the same value shouldn't make another flag request
                     expect(testContext.flagSynchronizer.isOnline) == true
@@ -232,7 +268,7 @@ final class FlagSynchronizerSpec: QuickSpec {
                     expect(testContext.serviceMock.createdEventSource?.startCallCount) == 1
                     expect(testContext.serviceMock.createdEventSource?.stopCallCount) == 0
 
-                    guard case let .flagCollection(flagCollection) = syncResult
+                    guard case let .flagCollection((flagCollection, _)) = syncResult
                     else { return fail("Expected flag collection sync result") }
                     expect(flagCollection.flags) == DarklyServiceMock.Constants.stubFeatureFlags()
                 }
@@ -357,7 +393,7 @@ final class FlagSynchronizerSpec: QuickSpec {
                     expect(testContext.serviceMock.createdEventSource?.startCallCount) == 1
                     expect(testContext.serviceMock.createdEventSource?.stopCallCount) == 0
 
-                    guard case let .flagCollection(flagCollection) = syncResult
+                    guard case let .flagCollection((flagCollection, _)) = syncResult
                     else { return fail("Expected flag collection sync result") }
                     expect(flagCollection.flags.count) == 1
                     expect(flagCollection.flags["flagKey"]) == FeatureFlag(flagKey: "flagKey", value: 123)
@@ -828,30 +864,36 @@ final class FlagSynchronizerSpec: QuickSpec {
         }
     }
 
-    class func pollingTimerFiresSpec() {
-        var syncResult: FlagSyncResult?
+    func pollingTimerFiresSpec() {
         describe("polling timer fires") {
-            context("one second interval") {
-                var testContext: TestContext!
-                beforeEach {
-                    testContext = TestContext(streamingMode: .polling, useReport: false)
-                    #if !os(Linux) && !os(Windows)
-                    testContext.serviceMock.stubFlagResponse(statusCode: HTTPURLResponse.StatusCodes.ok)
-                    #endif
-                    testContext.flagSynchronizer.isOnline = true
+            var testContext: TestContext!
 
-                    waitUntil(timeout: .seconds(2)) { done in
-                        // In polling mode, the flagSynchronizer makes a flag request when set online right away. To verify the timer this test waits the polling interval (1s) for a second flag request
-                        testContext.flagSynchronizer.onSyncComplete = { result in
-                            syncResult = result
-                            done()
+            beforeEach {
+                testContext = TestContext(streamingMode: .streaming, useReport: false)
+            }
+
+            context("one second interval") {
+                it("stops polling") {
+                    let semaphore = DispatchSemaphore(value: 0)
+                    var requestCount = 0
+                    DispatchQueue.global().async {
+                        testContext = TestContext(streamingMode: .polling, useReport: false) { _ in
+                            if requestCount == 1 {
+                                semaphore.signal()
+                            }
+                            requestCount += 1
                         }
+                        testContext.flagSynchronizer.isOnline = true
                     }
-                }
-                afterEach {
-                    testContext.flagSynchronizer.isOnline = false
-                }
-                it("makes a flag request and calls onSyncComplete with no streaming event") {
+
+                    let runLoop = RunLoop.current
+
+                    while semaphore.wait(timeout: .now()) == .timedOut {
+                        runLoop.run(mode: .default, before: .distantFuture)
+                    }
+
+                    expect(testContext.flagSynchronizer.isOnline) == true
+                    expect(testContext.flagSynchronizer.streamingMode) == .polling
                     expect(testContext.serviceMock.getFeatureFlagsCallCount) == 2
                     guard case let .flagCollection(flagCollection) = syncResult
                     else { return fail("Expected flag collection sync result") }
@@ -865,7 +907,6 @@ final class FlagSynchronizerSpec: QuickSpec {
         }
     }
 
-    class
     func flagRequestSpec() {
         describe("flag request") {
             var testContext: TestContext!

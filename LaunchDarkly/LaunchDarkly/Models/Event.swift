@@ -55,7 +55,7 @@ class CustomEvent: Event, SubEvent {
     fileprivate func encode(to encoder: Encoder, container: KeyedEncodingContainer<Event.CodingKeys>) throws {
         var container = container
         try container.encode(key, forKey: .key)
-        try container.encode(context.contextKeys(), forKey: .contextKeys)
+        try container.encode(context, forKey: .context)
 
         if data != .null {
             try container.encode(data, forKey: .data)
@@ -79,20 +79,24 @@ class FeatureEvent: Event, SubEvent {
         self.value = value
         self.defaultValue = defaultValue
         self.featureFlag = featureFlag
-        self.context = context
         self.includeReason = includeReason
         self.creationDate = creationDate
-        super.init(kind: isDebug ? .debug : .feature)
+
+        if isDebug {
+            self.context = context
+            super.init(kind: .debug)
+        } else {
+            var newContext = LDContext(copyFrom: context)
+            newContext.redactAnonymousAttributes = true
+            self.context = newContext
+            super.init(kind: .feature)
+        }
     }
 
     fileprivate func encode(to encoder: Encoder, container: KeyedEncodingContainer<Event.CodingKeys>) throws {
         var container = container
         try container.encode(key, forKey: .key)
-        if kind == .debug {
-            try container.encode(context, forKey: .context)
-        } else {
-            try container.encode(context.contextKeys(), forKey: .contextKeys)
-        }
+        try container.encode(context, forKey: .context)
         try container.encodeIfPresent(featureFlag?.variation, forKey: .variation)
         try container.encodeIfPresent(featureFlag?.versionForEvents, forKey: .version)
         try container.encode(value, forKey: .value)

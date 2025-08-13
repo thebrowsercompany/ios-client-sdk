@@ -2,9 +2,203 @@
 
 All notable changes to the LaunchDarkly iOS SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+## [9.14.0](https://github.com/launchdarkly/ios-client-sdk/compare/9.13.0...9.14.0) (2025-08-11)
+
+
+### Features
+
+* Adds experimental plugin functionality. ([41c8ad5](https://github.com/launchdarkly/ios-client-sdk/commit/41c8ad5bdcd7bfc0efc28e20ddb94f6287417826))
+
+## [9.13.0](https://github.com/launchdarkly/ios-client-sdk/compare/9.12.3...9.13.0) (2025-04-21)
+
+
+### Features
+
+* Inline context for custom events ([26fa397](https://github.com/launchdarkly/ios-client-sdk/commit/26fa3972f21e7aebc10ce2726ffca28575ac7e8c))
+
+## [9.12.3](https://github.com/launchdarkly/ios-client-sdk/compare/9.12.2...9.12.3) (2025-02-12)
+
+
+### Bug Fixes
+
+* fixes race condition that could lead to multiple start completion invocations ([#429](https://github.com/launchdarkly/ios-client-sdk/issues/429)) ([17d1ad4](https://github.com/launchdarkly/ios-client-sdk/commit/17d1ad4971d17d04c03a1ce0fa268ec4ff424e92))
+
+## [9.12.2](https://github.com/launchdarkly/ios-client-sdk/compare/9.12.1...9.12.2) (2025-01-15)
+
+
+### Bug Fixes
+
+* replaced inefficient string logic for sync complete log ([#425](https://github.com/launchdarkly/ios-client-sdk/issues/425)) ([2099bbe](https://github.com/launchdarkly/ios-client-sdk/commit/2099bbe7042d2257038612030ab35396596240a2))
+
+## [9.12.1](https://github.com/launchdarkly/ios-client-sdk/compare/9.12.0...9.12.1) (2025-01-14)
+
+
+### Bug Fixes
+
+* improving performance of FlagSynchronizer creation ([#420](https://github.com/launchdarkly/ios-client-sdk/issues/420)) ([e9575a0](https://github.com/launchdarkly/ios-client-sdk/commit/e9575a0ff998c916c0a61ed226a032bd2b82f578))
+
+## [9.12.0](https://github.com/launchdarkly/ios-client-sdk/compare/9.11.0...9.12.0) (2024-11-06)
+
+
+### Features
+
+* Add `LDConfig.sendEvents` option to disable all events ([#414](https://github.com/launchdarkly/ios-client-sdk/issues/414)) ([9a51844](https://github.com/launchdarkly/ios-client-sdk/commit/9a5184436ed76edd1cecfc81963888196157b1be))
+* Add cache usage option for identify calls ([#408](https://github.com/launchdarkly/ios-client-sdk/issues/408)) ([b928345](https://github.com/launchdarkly/ios-client-sdk/commit/b928345cabcdc66e2dffc7e260c2764fc18d07b2))
+
+## [9.11.0](https://github.com/launchdarkly/ios-client-sdk/compare/9.10.0...9.11.0) (2024-10-21)
+
+
+### Features
+
+* Adds support for client-side prerequisite events ([#409](https://github.com/launchdarkly/ios-client-sdk/issues/409)) ([d4ad59c](https://github.com/launchdarkly/ios-client-sdk/commit/d4ad59c0614fa8acb5b30ed0d7c3e507c3e264d1))
+
+## [9.10.0](https://github.com/launchdarkly/ios-client-sdk/compare/9.9.0...9.10.0) (2024-08-07)
+
+
+### Features
+
+* Update caching strategy to allow for greater cache use ([#404](https://github.com/launchdarkly/ios-client-sdk/issues/404)) ([62587ad](https://github.com/launchdarkly/ios-client-sdk/commit/62587ad565fefbc79cd6c0293257744c4ce54d5e))
+
+
+### Bug Fixes
+
+* Sort private attributes for improved stable encoding ([#401](https://github.com/launchdarkly/ios-client-sdk/issues/401)) ([90bf896](https://github.com/launchdarkly/ios-client-sdk/commit/90bf89624687f8e01cdbcfc9c108df23b4c71c02))
+
+## [9.9.0](https://github.com/launchdarkly/ios-client-sdk/compare/9.8.2...9.9.0) (2024-08-02)
+
+This release introduces the ability to enable compression of event payloads. When enabled, the SDK will compress events before sending them to the LaunchDarkly servers. This can reduce the bandwidth required to send events, which can be useful in high-traffic environments to reduce egress traffic costs.
+
+> [!IMPORTANT]
+> Relay Proxy users **MUST** upgrade to version 8.9 or higher prior to enabling this option to prevent loss of event data.
+>
+> However, enabling this feature is **NOT** required when using the Relay Proxy as it will manage compression automatically.
+
+
+### Features
+
+* Add option to enable compression of event payloads ([#399](https://github.com/launchdarkly/ios-client-sdk/issues/399)) ([ae4131f](https://github.com/launchdarkly/ios-client-sdk/commit/ae4131ff961507fc6e52823e26a20c7b2b7962c4))
+
+## [9.8.2](https://github.com/launchdarkly/ios-client-sdk/compare/9.8.1...9.8.2) (2024-06-10)
+
+
+### Bug Fixes
+
+* start time warning log now uses float wildcard for string interpolation of time interval ([#393](https://github.com/launchdarkly/ios-client-sdk/issues/393)) ([573c99b](https://github.com/launchdarkly/ios-client-sdk/commit/573c99bafbe95b22cad0b48b395fa9610e463327))
+
+## [9.8.1](https://github.com/launchdarkly/ios-client-sdk/compare/9.8.0...9.8.1) (2024-06-03)
+
+
+### Bug Fixes
+
+* configured logger is now also used for logging LDEventSource log messages ([#390](https://github.com/launchdarkly/ios-client-sdk/issues/390)) ([7a3e67a](https://github.com/launchdarkly/ios-client-sdk/commit/7a3e67a628a4a6f5185571704754ade14ba9eac5))
+
+## [9.8.0](https://github.com/launchdarkly/ios-client-sdk/compare/9.7.2...9.8.0) (2024-05-20)
+
+
+### Features
+
+* adds LD_OBJC_EXCLUDE_PURE_SWIFT_APIS compiler flag. ([#386](https://github.com/launchdarkly/ios-client-sdk/issues/386)) ([fef65f5](https://github.com/launchdarkly/ios-client-sdk/commit/fef65f588151aab1a8fdbd423d64d91dde7ffb3d))
+
+## [9.7.2](https://github.com/launchdarkly/ios-client-sdk/compare/9.7.1...9.7.2) (2024-05-20)
+
+
+### Bug Fixes
+
+* Add default implementation for hook methods ([#384](https://github.com/launchdarkly/ios-client-sdk/issues/384)) ([4461043](https://github.com/launchdarkly/ios-client-sdk/commit/446104318048e49b420e4d26f3b50b79007b66a9))
+
+## [9.7.1](https://github.com/launchdarkly/ios-client-sdk/compare/9.7.0...9.7.1) (2024-05-16)
+
+
+### Bug Fixes
+
+* adds multithread protections for LDClient.start(...) ([#382](https://github.com/launchdarkly/ios-client-sdk/issues/382)) ([8fd47e4](https://github.com/launchdarkly/ios-client-sdk/commit/8fd47e49290c4fe640b52a84c64b4ef6c7d28afb))
+
+## [9.7.0](https://github.com/launchdarkly/ios-client-sdk/compare/9.6.2...9.7.0) (2024-05-02)
+
+
+### Features
+
+* Add initial support for hooks ([#370](https://github.com/launchdarkly/ios-client-sdk/issues/370)) ([93239fc](https://github.com/launchdarkly/ios-client-sdk/commit/93239fc1dbcdaa4791f5c0f22aa50704a03a84bc))
+
+## [9.6.2](https://github.com/launchdarkly/ios-client-sdk/compare/9.6.1...9.6.2) (2024-04-03)
+
+
+### Bug Fixes
+
+* Mark  NSPrivacyCollectedDataTypeTracking as false in privacy manifest ([#366](https://github.com/launchdarkly/ios-client-sdk/issues/366)) ([fac9030](https://github.com/launchdarkly/ios-client-sdk/commit/fac9030e9f9a327d1e914102a2c982f8008fe5ae))
+
+## [9.6.1](https://github.com/launchdarkly/ios-client-sdk/compare/9.6.0...9.6.1) (2024-04-02)
+
+
+### Bug Fixes
+
+* Add missing privacy manifest resource for SPM ([#360](https://github.com/launchdarkly/ios-client-sdk/issues/360)) ([48f06cf](https://github.com/launchdarkly/ios-client-sdk/commit/48f06cf6025283e00b8375e874c464f9f0cf9d91))
+* Add missing privacy tracking fields in manifest ([#362](https://github.com/launchdarkly/ios-client-sdk/issues/362)) ([7439997](https://github.com/launchdarkly/ios-client-sdk/commit/743999791137c4dbab9d2668035fc034bc6a12ce))
+* Add objective-c binding for `LDConfig.logger` ([#365](https://github.com/launchdarkly/ios-client-sdk/issues/365)) ([eae8d78](https://github.com/launchdarkly/ios-client-sdk/commit/eae8d78cfaad27b5910d1f00e3f9acfc173d1c7d))
+* Deprecate calling `start` without a timeout parameter ([#364](https://github.com/launchdarkly/ios-client-sdk/issues/364)) ([65d88a4](https://github.com/launchdarkly/ios-client-sdk/commit/65d88a451550831feeb882f8a608e9fad2734c8d))
+* Use resource_bundle for privacy manifest in podspec ([#361](https://github.com/launchdarkly/ios-client-sdk/issues/361)) ([971a4c4](https://github.com/launchdarkly/ios-client-sdk/commit/971a4c4abb6144c80af5af3b71f4336dde917f20))
+
+## [9.6.0](https://github.com/launchdarkly/ios-client-sdk/compare/9.5.1...9.6.0) (2024-03-20)
+
+
+### Features
+
+* Honor polling interval between restarts ([#355](https://github.com/launchdarkly/ios-client-sdk/issues/355)) ([bd58864](https://github.com/launchdarkly/ios-client-sdk/commit/bd58864e940f8be24b11da14df5c483dac858a0f))
+
+## [9.5.1](https://github.com/launchdarkly/ios-client-sdk/compare/9.5.0...9.5.1) (2024-03-15)
+
+
+### Bug Fixes
+
+* Prevent null value changes to observe listeners ([#352](https://github.com/launchdarkly/ios-client-sdk/issues/352)) ([c1f1926](https://github.com/launchdarkly/ios-client-sdk/commit/c1f1926cf00e45b36f7861e12a5121f89fb6be68))
+
+## [9.5.0](https://github.com/launchdarkly/ios-client-sdk/compare/9.4.1...9.5.0) (2024-03-14)
+
+
+### Features
+
+* Inline contexts for all evaluation events ([#332](https://github.com/launchdarkly/ios-client-sdk/issues/332)) ([a0f795b](https://github.com/launchdarkly/ios-client-sdk/commit/a0f795b8b089233917af5fcfd1d7a4d83ffb6767))
+* Redact anonymous attributes within feature events ([#333](https://github.com/launchdarkly/ios-client-sdk/issues/333)) ([0fd5dbd](https://github.com/launchdarkly/ios-client-sdk/commit/0fd5dbd382f80547508d0f8828f2b522ca033c73))
+
+## [9.4.1](https://github.com/launchdarkly/ios-client-sdk/compare/9.4.0...9.4.1) (2024-03-01)
+
+
+### Bug Fixes
+
+* Ensure secondary environments use correct mobile key ([#347](https://github.com/launchdarkly/ios-client-sdk/issues/347)) ([e92054c](https://github.com/launchdarkly/ios-client-sdk/commit/e92054c6c3c0b6a5bb04706a8466b92dd433b4e4))
+
+## [9.4.0](https://github.com/launchdarkly/ios-client-sdk/compare/9.3.0...9.4.0) (2024-02-21)
+
+
+### Features
+
+* Add new identify method with time out support ([#344](https://github.com/launchdarkly/ios-client-sdk/issues/344)) ([34ba8ab](https://github.com/launchdarkly/ios-client-sdk/commit/34ba8ab380dfc56aa21d2e13fadb634da0a01bdb))
+* Implement shedding identity queue ([#343](https://github.com/launchdarkly/ios-client-sdk/issues/343)) ([393a28c](https://github.com/launchdarkly/ios-client-sdk/commit/393a28c73cdcece4edfba373aa9ec9e5c4ae4080))
+* Introduce variation method with generic return types ([#342](https://github.com/launchdarkly/ios-client-sdk/issues/342)) ([7ff2ffb](https://github.com/launchdarkly/ios-client-sdk/commit/7ff2ffbc9e651114356c8972546ef177b73d0aeb))
+
+
+### Bug Fixes
+
+* Add privacy manifest  ([#334](https://github.com/launchdarkly/ios-client-sdk/issues/334)) ([154fde7](https://github.com/launchdarkly/ios-client-sdk/commit/154fde7e1cae7ed5474f5adf89525f7f1448befc))
+* Ensure anonymous context is valid ([#338](https://github.com/launchdarkly/ios-client-sdk/issues/338)) ([65406cc](https://github.com/launchdarkly/ios-client-sdk/commit/65406cc68b52cc50726d671e19fb804bb52f2a20))
+* Replace simple logger with os_log statements ([#340](https://github.com/launchdarkly/ios-client-sdk/issues/340)) ([7ba4397](https://github.com/launchdarkly/ios-client-sdk/commit/7ba43973e379ce5b057baad5860ed313a016c34b))
+
+## [9.3.0](https://github.com/launchdarkly/ios-client-sdk/compare/9.2.1...9.3.0) (2024-01-02)
+
+
+### Features
+
+* Store and use e-tag header between SDK initializations ([#268](https://github.com/launchdarkly/ios-client-sdk/issues/268)) ([701aaa8](https://github.com/launchdarkly/ios-client-sdk/commit/701aaa8c7e1a910e5bf7cbd0a5b03b94683cc665))
+
+
+### Bug Fixes
+
+* LDContext equality is no longer order dependent ([#265](https://github.com/launchdarkly/ios-client-sdk/issues/265)) ([683e0c3](https://github.com/launchdarkly/ios-client-sdk/commit/683e0c3b189b10c1a14eddd13d19c79783aa6e64))
+* Use stable encoding format to increase cache hits ([#267](https://github.com/launchdarkly/ios-client-sdk/issues/267)) ([40a5d01](https://github.com/launchdarkly/ios-client-sdk/commit/40a5d0114ccbc4f699e58dddbe8b3dc8f842f72b))
+
 ## [9.2.1] - 2023-10-31
 ### Changed:
-- Calling `identify()` with the current context is now more efficient and no longer results in re-establishing a connection.
+- Calling `identify()` with a context that is identical to the SDK's current context is now more efficient, and no longer results in re-establishing a connection.
 
 ### Fixed:
 - Fixed issue where flag change listeners were not being triggered when `identify()` was called.
@@ -44,7 +238,7 @@ All notable changes to the LaunchDarkly iOS SDK will be documented in this file.
 
 ## [8.3.1] - 2023-10-31
 ### Changed:
-- Calling `identify()` with the current context is now more efficient and no longer results in re-establishing a connection.
+- Calling `identify()` with a context that is identical to the SDK's current context is now more efficient, and no longer results in re-establishing a connection.
 
 ### Fixed:
 - Fixed issue where flag change listeners were not being triggered when `identify()` was called.

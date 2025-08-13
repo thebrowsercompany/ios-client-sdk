@@ -21,7 +21,7 @@ final class DarklyServiceSpec: QuickSpec {
         var config: LDConfig!
         var envReporterMock = EnvironmentReportingMock()
         var serviceMock: DarklyServiceMock!
-        var serviceFactoryMock: ClientServiceMockFactory = ClientServiceMockFactory()
+        var serviceFactoryMock: ClientServiceMockFactory
         var service: DarklyService!
         var httpHeaders: HTTPHeaders
         let stubFlags = FlagMaintainingMock.stubStoredItems()
@@ -33,6 +33,7 @@ final class DarklyServiceSpec: QuickSpec {
             config = LDConfig.stub(mobileKey: mobileKey, autoEnvAttributes: .disabled, isDebugBuild: true)
             config.useReport = useReport
             config.diagnosticOptOut = diagnosticOptOut
+            self.serviceFactoryMock = ClientServiceMockFactory(config: config)
             serviceMock = DarklyServiceMock(config: config)
             service = DarklyService(config: config, context: context, envReporter: envReporterMock, serviceFactory: serviceFactoryMock)
             httpHeaders = HTTPHeaders(config: config, environmentReporter: envReporterMock)
@@ -41,7 +42,7 @@ final class DarklyServiceSpec: QuickSpec {
         func runStubbedGet(statusCode: Int, featureFlags: [LDFlagKey: FeatureFlag]? = nil, flagResponseEtag: String? = nil) {
             serviceMock.stubFlagRequest(statusCode: statusCode, useReport: config.useReport, flagResponseEtag: flagResponseEtag)
             waitUntil { done in
-                self.service.getFeatureFlags(useReport: Constants.useGetMethod, completion: { _, _, _ in
+                self.service.getFeatureFlags(useReport: Constants.useGetMethod, completion: { _ in
                     done()
                 })
             }
@@ -97,8 +98,8 @@ final class DarklyServiceSpec: QuickSpec {
                                                                             getRequestCount += 1
                                                                             urlRequest = request
                                 })
-                                testContext.service.getFeatureFlags(useReport: Constants.useGetMethod, completion: { (data, response, error) in
-                                    responses = (data, response, error)
+                                testContext.service.getFeatureFlags(useReport: Constants.useGetMethod, completion: { response in
+                                    responses = (response.data, response.urlResponse, response.error)
                                     done()
                                 })
                             }
@@ -112,7 +113,7 @@ final class DarklyServiceSpec: QuickSpec {
                             expect(urlRequest?.url?.host) == testContext.config.baseUrl.host
                             if let path = urlRequest?.url?.path {
                                 expect(path.hasPrefix("/\(DarklyService.FlagRequestPath.get)")).to(beTrue())
-                                let expectedContext = encodeToLDValue(testContext.context, userInfo: [LDContext.UserInfoKeys.includePrivateAttributes: true])
+                                let expectedContext = encodeToLDValue(testContext.context, userInfo: [LDContext.UserInfoKeys.includePrivateAttributes: true, LDContext.UserInfoKeys.redactAttributes: false])
                                 expect(urlRequest?.url?.lastPathComponent.jsonValue) == expectedContext
                             } else {
                                 fail("request path is missing")
@@ -150,8 +151,8 @@ final class DarklyServiceSpec: QuickSpec {
                                                                             getRequestCount += 1
                                                                             urlRequest = request
                                 })
-                                testContext.service.getFeatureFlags(useReport: Constants.useGetMethod, completion: { (data, response, error) in
-                                    responses = (data, response, error)
+                                testContext.service.getFeatureFlags(useReport: Constants.useGetMethod, completion: { response in
+                                    responses = (response.data, response.urlResponse, response.error)
                                     done()
                                 })
                             }
@@ -165,7 +166,7 @@ final class DarklyServiceSpec: QuickSpec {
                             expect(urlRequest?.url?.host) == testContext.config.baseUrl.host
                             if let path = urlRequest?.url?.path {
                                 expect(path.hasPrefix("/\(DarklyService.FlagRequestPath.get)")).to(beTrue())
-                                let expectedContext = encodeToLDValue(testContext.context, userInfo: [LDContext.UserInfoKeys.includePrivateAttributes: true])
+                                let expectedContext = encodeToLDValue(testContext.context, userInfo: [LDContext.UserInfoKeys.includePrivateAttributes: true, LDContext.UserInfoKeys.redactAttributes: false])
                                 expect(urlRequest?.url?.lastPathComponent.jsonValue) == expectedContext
                             } else {
                                 fail("request path is missing")
@@ -201,8 +202,8 @@ final class DarklyServiceSpec: QuickSpec {
                                                                     onActivation: { _ in
                                                                         getRequestCount += 1
                             })
-                            testContext.service.getFeatureFlags(useReport: Constants.useGetMethod, completion: { (data, response, error) in
-                                responses = (data, response, error)
+                            testContext.service.getFeatureFlags(useReport: Constants.useGetMethod, completion: { response in
+                                responses = (response.data, response.urlResponse, response.error)
                                 done()
                             })
                         }
@@ -232,8 +233,8 @@ final class DarklyServiceSpec: QuickSpec {
                                                                 onActivation: { _ in
                             getRequestCount += 1
                         })
-                        testContext.service.getFeatureFlags(useReport: Constants.useGetMethod, completion: { (data, response, error) in
-                            responses = (data, response, error)
+                        testContext.service.getFeatureFlags(useReport: Constants.useGetMethod, completion: { response in
+                            responses = (response.data, response.urlResponse, response.error)
                         })
                     }
                     it("does not make a request") {
@@ -264,8 +265,8 @@ final class DarklyServiceSpec: QuickSpec {
                                                                             reportRequestCount += 1
                                                                             urlRequest = request
                                 })
-                                testContext.service.getFeatureFlags(useReport: Constants.useReportMethod, completion: { (data, response, error) in
-                                    responses = (data, response, error)
+                                testContext.service.getFeatureFlags(useReport: Constants.useReportMethod, completion: { response in
+                                    responses = (response.data, response.urlResponse, response.error)
                                     done()
                                 })
                             }
@@ -316,8 +317,8 @@ final class DarklyServiceSpec: QuickSpec {
                                                                             reportRequestCount += 1
                                                                             urlRequest = request
                                 })
-                                testContext.service.getFeatureFlags(useReport: Constants.useReportMethod, completion: { (data, response, error) in
-                                    responses = (data, response, error)
+                                testContext.service.getFeatureFlags(useReport: Constants.useReportMethod, completion: { response in
+                                    responses = (response.data, response.urlResponse, response.error)
                                     done()
                                 })
                             }
@@ -365,8 +366,8 @@ final class DarklyServiceSpec: QuickSpec {
                                                                     onActivation: { _ in
                                                                         getRequestCount += 1
                             })
-                            testContext.service.getFeatureFlags(useReport: Constants.useReportMethod, completion: { data, response, error in
-                                responses = (data, response, error)
+                            testContext.service.getFeatureFlags(useReport: Constants.useReportMethod, completion: { response in
+                                responses = (response.data, response.urlResponse, response.error)
                                 done()
                             })
                         }
@@ -396,8 +397,8 @@ final class DarklyServiceSpec: QuickSpec {
                                                                 onActivation: { _ in
                                                                     reportRequestCount += 1
                         })
-                        testContext.service.getFeatureFlags(useReport: Constants.useReportMethod, completion: { data, response, error in
-                            responses = (data, response, error)
+                        testContext.service.getFeatureFlags(useReport: Constants.useReportMethod, completion: { response in
+                            responses = (response.data, response.urlResponse, response.error)
                         })
                     }
                     it("does not make a request") {
@@ -517,7 +518,7 @@ final class DarklyServiceSpec: QuickSpec {
             it("clears cached etag") {
                 let testContext = TestContext()
                 testContext.service.flagRequestEtag = UUID().uuidString
-                testContext.service.clearFlagResponseCache()
+                testContext.service.resetFlagResponseCache(etag: nil)
                 expect(testContext.service.flagRequestEtag).to(beNil())
             }
         }
@@ -540,7 +541,7 @@ final class DarklyServiceSpec: QuickSpec {
                     let receivedArguments = testContext.serviceFactoryMock.makeStreamingProviderReceivedArguments
                     expect(receivedArguments!.url.host) == testContext.config.streamUrl.host
                     expect(receivedArguments!.url.pathComponents.contains(DarklyService.StreamRequestPath.meval)).to(beTrue())
-                    let expectedContext = encodeToLDValue(testContext.context, userInfo: [LDContext.UserInfoKeys.includePrivateAttributes: true])
+                    let expectedContext = encodeToLDValue(testContext.context, userInfo: [LDContext.UserInfoKeys.includePrivateAttributes: true, LDContext.UserInfoKeys.redactAttributes: false])
                     expect(receivedArguments!.url.lastPathComponent.jsonValue) == expectedContext
                     expect(receivedArguments!.httpHeaders).toNot(beEmpty())
                     expect(receivedArguments!.connectMethod) == "GET"
@@ -561,7 +562,7 @@ final class DarklyServiceSpec: QuickSpec {
                     expect(receivedArguments!.url.lastPathComponent) == DarklyService.StreamRequestPath.meval
                     expect(receivedArguments!.httpHeaders).toNot(beEmpty())
                     expect(receivedArguments!.connectMethod) == DarklyService.HTTPRequestMethod.report
-                    let expectedContext = encodeToLDValue(testContext.context, userInfo: [LDContext.UserInfoKeys.includePrivateAttributes: true])
+                    let expectedContext = encodeToLDValue(testContext.context, userInfo: [LDContext.UserInfoKeys.includePrivateAttributes: true, LDContext.UserInfoKeys.redactAttributes: false])
                     expect(try? JSONDecoder().decode(LDValue.self, from: receivedArguments!.connectBody!)) == expectedContext
                 }
             }
@@ -584,8 +585,8 @@ final class DarklyServiceSpec: QuickSpec {
                 beforeEach {
                     waitUntil { done in
                         testContext.serviceMock.stubEventRequest(success: true) { eventRequest = $0 }
-                        testContext.service.publishEventData(testData, UUID().uuidString) { data, response, error in
-                            responses = (data, response, error)
+                        testContext.service.publishEventData(testData, UUID().uuidString) { response in
+                            responses = (response.data, response.urlResponse, response.error)
                             done()
                         }
                     }
@@ -606,8 +607,8 @@ final class DarklyServiceSpec: QuickSpec {
                 beforeEach {
                     waitUntil { done in
                         testContext.serviceMock.stubEventRequest(success: false) { eventRequest = $0 }
-                        testContext.service.publishEventData(testData, UUID().uuidString) { data, response, error in
-                            responses = (data, response, error)
+                        testContext.service.publishEventData(testData, UUID().uuidString) { response in
+                            responses = (response.data, response.urlResponse, response.error)
                             done()
                         }
                     }
@@ -629,8 +630,8 @@ final class DarklyServiceSpec: QuickSpec {
                 beforeEach {
                     testContext = TestContext(mobileKey: "", useReport: Constants.useGetMethod)
                     testContext.serviceMock.stubEventRequest(success: true) { eventRequest = $0 }
-                    testContext.service.publishEventData(testData, UUID().uuidString) { data, response, error in
-                        responses = (data, response, error)
+                    testContext.service.publishEventData(testData, UUID().uuidString) { response in
+                        responses = (response.data, response.urlResponse, response.error)
                         eventsPublished = true
                     }
                 }
@@ -685,8 +686,8 @@ final class DarklyServiceSpec: QuickSpec {
                         testContext.serviceMock.stubDiagnosticRequest(success: true) { request, _, _ in
                             diagnosticRequest = request
                         }
-                        testContext.service.publishDiagnostic(diagnosticEvent: self.stubDiagnostic()) { data, response, error in
-                            responses = (data, response, error)
+                        testContext.service.publishDiagnostic(diagnosticEvent: self.stubDiagnostic()) { response in
+                            responses = (response.data, response.urlResponse, response.error)
                             done()
                         }
                     }
@@ -714,8 +715,8 @@ final class DarklyServiceSpec: QuickSpec {
                 beforeEach {
                     waitUntil { done in
                         testContext.serviceMock.stubEventRequest(success: false) { diagnosticRequest = $0 }
-                        testContext.service.publishDiagnostic(diagnosticEvent: self.stubDiagnostic()) { data, response, error in
-                            responses = (data, response, error)
+                        testContext.service.publishDiagnostic(diagnosticEvent: self.stubDiagnostic()) { response in
+                            responses = (response.data, response.urlResponse, response.error)
                             done()
                         }
                     }

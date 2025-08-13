@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 import Quick
 import Nimble
 import LDSwiftEventSource
@@ -14,126 +15,6 @@ final class LDClientSpec: QuickSpec {
         fileprivate static let alternateMockMobileKey = "alternateMockMobileKey"
 
         fileprivate static let updateThreshold: TimeInterval = 0.05
-    }
-
-    struct DefaultFlagValues {
-        static let bool = false
-        static let int = 5
-        static let double = 2.71828
-        static let string = "default string value"
-        static let array: LDValue = [-1, -2]
-        static let dictionary: LDValue = ["sub-flag-x": true, "sub-flag-y": 1, "sub-flag-z": 42.42]
-    }
-
-    class TestContext {
-        var config: LDConfig!
-        var context: LDContext!
-        var subject: LDClient!
-        let serviceFactoryMock = ClientServiceMockFactory()
-        // mock getters based on setting up the context & subject
-        var serviceMock: DarklyServiceMock! {
-            subject.service as? DarklyServiceMock
-        }
-        var featureFlagCachingMock: FeatureFlagCachingMock! {
-            subject.flagCache as? FeatureFlagCachingMock
-        }
-        var flagStoreMock: FlagMaintainingMock! {
-            subject.flagStore as? FlagMaintainingMock
-        }
-        var flagSynchronizerMock: LDFlagSynchronizingMock! {
-            subject.flagSynchronizer as? LDFlagSynchronizingMock
-        }
-        var eventReporterMock: EventReportingMock! {
-            subject.eventReporter as? EventReportingMock
-        }
-        var changeNotifierMock: FlagChangeNotifyingMock! {
-            subject.flagChangeNotifier as? FlagChangeNotifyingMock
-        }
-        var environmentReporterMock: EnvironmentReportingMock! {
-            subject.environmentReporter as? EnvironmentReportingMock
-        }
-        var makeFlagSynchronizerStreamingMode: LDStreamingMode? {
-            serviceFactoryMock.makeFlagSynchronizerReceivedParameters?.streamingMode
-        }
-        var makeFlagSynchronizerPollingInterval: TimeInterval? {
-            serviceFactoryMock.makeFlagSynchronizerReceivedParameters?.pollingInterval
-        }
-        var makeFlagSynchronizerService: DarklyServiceProvider? {
-            serviceFactoryMock.makeFlagSynchronizerReceivedParameters?.service
-        }
-        var onSyncComplete: FlagSyncCompleteClosure? {
-            serviceFactoryMock.onFlagSyncComplete
-        }
-        var recordedEvent: LaunchDarkly.Event? {
-            eventReporterMock.recordReceivedEvent
-        }
-        var throttlerMock: ThrottlingMock? {
-            subject.throttler as? ThrottlingMock
-        }
-
-        private(set) var cachedFlags: [String: [String: [LDFlagKey: FeatureFlag]]] = [:]
-
-        init(newConfig: LDConfig? = nil,
-             startOnline: Bool = false,
-             streamingMode: LDStreamingMode = .streaming,
-             enableBackgroundUpdates: Bool = true) {
-            serviceFactoryMock.makeFlagChangeNotifierReturnValue = FlagChangeNotifier()
-
-            serviceFactoryMock.makeFeatureFlagCacheCallback = {
-                let mobileKey = self.serviceFactoryMock.makeFeatureFlagCacheReceivedParameters!.mobileKey
-                let mockCache = FeatureFlagCachingMock()
-                mockCache.retrieveFeatureFlagsCallback = {
-                    mockCache.retrieveFeatureFlagsReturnValue = StoredItems(items: self.cachedFlags[mobileKey]?[mockCache.retrieveFeatureFlagsReceivedContextKey!] ?? [:])
-                }
-                self.serviceFactoryMock.makeFeatureFlagCacheReturnValue = mockCache
-            }
-
-            config = newConfig ?? LDConfig.stub(mobileKey: LDConfig.Constants.mockMobileKey, autoEnvAttributes: .disabled, isDebugBuild: false)
-            config.startOnline = startOnline
-            config.streamingMode = streamingMode
-            config.enableBackgroundUpdates = enableBackgroundUpdates
-            config.eventFlushInterval = 300.0   // 5 min...don't want this to trigger
-
-            context = LDContext.stub()
-        }
-
-        func withContext(_ context: LDContext?) -> TestContext {
-            self.context = context
-            return self
-        }
-
-        func withCached(flags: [LDFlagKey: FeatureFlag]?) -> TestContext {
-            withCached(contextKey: context.fullyQualifiedHashedKey(), flags: flags)
-        }
-
-        func withCached(contextKey: String, flags: [LDFlagKey: FeatureFlag]?) -> TestContext {
-            var forEnv = cachedFlags[config.mobileKey] ?? [:]
-            forEnv[contextKey] = flags
-            cachedFlags[config.mobileKey] = forEnv
-            return self
-        }
-
-        func start(runMode: LDClientRunMode = .foreground, completion: (() -> Void)? = nil) {
-            LDClient.start(serviceFactory: serviceFactoryMock, config: config, context: context) {
-                self.subject = LDClient.get()
-                if runMode == .background {
-                    self.subject.setRunMode(.background)
-                }
-                completion?()
-            }
-            subject = LDClient.get()
-        }
-
-        func start(runMode: LDClientRunMode = .foreground, timeOut: TimeInterval, timeOutCompletion: ((_ timedOut: Bool) -> Void)? = nil) {
-            LDClient.start(serviceFactory: serviceFactoryMock, config: config, context: context, startWaitSeconds: timeOut) { timedOut in
-                self.subject = LDClient.get()
-                if runMode == .background {
-                    self.subject.setRunMode(.background)
-                }
-                timeOutCompletion?(timedOut)
-            }
-            subject = LDClient.get()
-        }
     }
 
     override class func spec() {
@@ -215,8 +96,8 @@ final class LDClientSpec: QuickSpec {
                 expect(testContext.serviceFactoryMock.makeEventReporterReceivedService?.context) == testContext.context
             }
             it("uncaches the new contexts flags") {
-                expect(testContext.featureFlagCachingMock.retrieveFeatureFlagsCallCount) == 1
-                expect(testContext.featureFlagCachingMock.retrieveFeatureFlagsReceivedContextKey) == testContext.context.fullyQualifiedHashedKey()
+                expect(testContext.featureFlagCachingMock.getCachedDataCallCount) == 1
+                expect(testContext.featureFlagCachingMock.getCachedDataReceivedArguments?.cacheKey) == testContext.context.fullyQualifiedHashedKey()
             }
             it("records an identify event") {
                 expect(testContext.eventReporterMock.recordCallCount) == 1
@@ -258,8 +139,8 @@ final class LDClientSpec: QuickSpec {
                 expect(testContext.serviceFactoryMock.makeEventReporterReceivedService?.context) == testContext.context
             }
             it("uncaches the new contexts flags") {
-                expect(testContext.featureFlagCachingMock.retrieveFeatureFlagsCallCount) == 1
-                expect(testContext.featureFlagCachingMock.retrieveFeatureFlagsReceivedContextKey) == testContext.context.fullyQualifiedHashedKey()
+                expect(testContext.featureFlagCachingMock.getCachedDataCallCount) == 1
+                expect(testContext.featureFlagCachingMock.getCachedDataReceivedArguments?.cacheKey) == testContext.context.fullyQualifiedHashedKey()
             }
             it("records an identify event") {
                 expect(testContext.eventReporterMock.recordCallCount) == 1
@@ -281,7 +162,7 @@ final class LDClientSpec: QuickSpec {
                     withTimeout ? testContext.start(timeOut: 10.0) : testContext.start()
 
                     testContext.context = LDContext.stub()
-                    testContext.subject.internalIdentify(newContext: testContext.context)
+                    testContext.subject.internalIdentify(newContext: testContext.context, useCache: .yes)
                 }
                 it("saves the config") {
                     expect(testContext.subject.config) == testContext.config
@@ -300,8 +181,8 @@ final class LDClientSpec: QuickSpec {
                     expect(testContext.serviceFactoryMock.makeEventReporterReceivedService?.context) == testContext.context
                 }
                 it("uncaches the new contexts flags") {
-                    expect(testContext.featureFlagCachingMock.retrieveFeatureFlagsCallCount) == 2 // called on init and subsequent identify
-                    expect(testContext.featureFlagCachingMock.retrieveFeatureFlagsReceivedContextKey) == testContext.context.fullyQualifiedHashedKey()
+                    expect(testContext.featureFlagCachingMock.getCachedDataCallCount) == 2 // called on init and subsequent identify
+                    expect(testContext.featureFlagCachingMock.getCachedDataReceivedArguments?.cacheKey) == testContext.context.fullyQualifiedHashedKey()
                 }
                 it("records an identify event") {
                     expect(testContext.eventReporterMock.recordCallCount) == 2 // both start and internalIdentify
@@ -332,8 +213,8 @@ final class LDClientSpec: QuickSpec {
                     expect(testContext.serviceFactoryMock.makeEventReporterReceivedService?.context) == testContext.subject.context
                 }
                 it("uncaches the new contexts flags") {
-                    expect(testContext.featureFlagCachingMock.retrieveFeatureFlagsCallCount) == 1
-                    expect(testContext.featureFlagCachingMock.retrieveFeatureFlagsReceivedContextKey) == testContext.subject.context.fullyQualifiedHashedKey()
+                    expect(testContext.featureFlagCachingMock.getCachedDataCallCount) == 1
+                    expect(testContext.featureFlagCachingMock.getCachedDataReceivedArguments?.cacheKey) == testContext.subject.context.fullyQualifiedHashedKey()
                 }
                 it("records an identify event") {
                     expect(testContext.eventReporterMock.recordCallCount) == 1
@@ -351,8 +232,8 @@ final class LDClientSpec: QuickSpec {
             let testContext = TestContext().withCached(flags: cachedFlags.featureFlags)
             withTimeout ? testContext.start(timeOut: 10.0) : testContext.start()
 
-            expect(testContext.featureFlagCachingMock.retrieveFeatureFlagsCallCount) == 1
-            expect(testContext.featureFlagCachingMock.retrieveFeatureFlagsReceivedContextKey) == testContext.context.fullyQualifiedHashedKey()
+            expect(testContext.featureFlagCachingMock.getCachedDataCallCount) == 1
+            expect(testContext.featureFlagCachingMock.getCachedDataReceivedArguments?.cacheKey) == testContext.context.fullyQualifiedHashedKey()
 
             expect(testContext.flagStoreMock.replaceStoreReceivedNewFlags) == cachedFlags
 
@@ -364,8 +245,8 @@ final class LDClientSpec: QuickSpec {
             let testContext = TestContext()
             withTimeout ? testContext.start(timeOut: 10.0) : testContext.start()
 
-            expect(testContext.featureFlagCachingMock.retrieveFeatureFlagsCallCount) == 1
-            expect(testContext.featureFlagCachingMock.retrieveFeatureFlagsReceivedContextKey) == testContext.context.fullyQualifiedHashedKey()
+            expect(testContext.featureFlagCachingMock.getCachedDataCallCount) == 1
+            expect(testContext.featureFlagCachingMock.getCachedDataReceivedArguments?.cacheKey) == testContext.context.fullyQualifiedHashedKey()
 
             expect(testContext.flagStoreMock.replaceStoreCallCount) == 0
 
@@ -441,7 +322,7 @@ final class LDClientSpec: QuickSpec {
 
                             // Test that already timed out completion is not called when sync completes
                             completed = false
-                            testContext.onSyncComplete?(.flagCollection(FeatureFlagCollection([:])))
+                            testContext.onSyncComplete?(.flagCollection((FeatureFlagCollection([:]), nil)))
                             Thread.sleep(forTimeInterval: 1.0)
                             expect(completed) == false
                         }
@@ -451,13 +332,13 @@ final class LDClientSpec: QuickSpec {
             context("after receiving flags") {
                 it("does complete without timeout") {
                     testContext.start(completion: startCompletion)
-                    testContext.onSyncComplete?(.flagCollection(FeatureFlagCollection([:])))
-                    expect(completed).toEventually(beTrue(), timeout: .seconds(2))
+                    testContext.onSyncComplete?(.flagCollection((FeatureFlagCollection([:]), nil)))
+                    expect(completed).toEventually(beTrue(), timeout: DispatchTimeInterval.seconds(2))
                 }
                 it("does complete with timeout") {
                     waitUntil(timeout: .seconds(3)) { done in
                         testContext.start(timeOut: 5.0, timeOutCompletion: startTimeoutCompletion(done))
-                        testContext.onSyncComplete?(.flagCollection(FeatureFlagCollection([:])))
+                        testContext.onSyncComplete?(.flagCollection((FeatureFlagCollection([:]), nil)))
                     }
                     expect(completed).toEventually(beTrue(), timeout: .seconds(2))
                     expect(didTimeOut) == false
@@ -505,8 +386,8 @@ final class LDClientSpec: QuickSpec {
                             expect(testContext.serviceFactoryMock.makeEventReporterReceivedService?.context) == testContext.context
                         }
                         it("uncaches the new contexts flags") {
-                            expect(testContext.featureFlagCachingMock.retrieveFeatureFlagsCallCount) == 1
-                            expect(testContext.featureFlagCachingMock.retrieveFeatureFlagsReceivedContextKey) == testContext.context.fullyQualifiedHashedKey()
+                            expect(testContext.featureFlagCachingMock.getCachedDataCallCount) == 1
+                            expect(testContext.featureFlagCachingMock.getCachedDataReceivedArguments?.cacheKey) == testContext.context.fullyQualifiedHashedKey()
                         }
                         it("records an identify event") {
                             expect(testContext.eventReporterMock.recordCallCount) == 1
@@ -544,8 +425,8 @@ final class LDClientSpec: QuickSpec {
                             expect(testContext.serviceFactoryMock.makeEventReporterReceivedService?.context) == testContext.context
                         }
                         it("uncaches the new contexts flags") {
-                            expect(testContext.featureFlagCachingMock.retrieveFeatureFlagsCallCount) == 1
-                            expect(testContext.featureFlagCachingMock.retrieveFeatureFlagsReceivedContextKey) == testContext.context.fullyQualifiedHashedKey()
+                            expect(testContext.featureFlagCachingMock.getCachedDataCallCount) == 1
+                            expect(testContext.featureFlagCachingMock.getCachedDataReceivedArguments?.cacheKey) == testContext.context.fullyQualifiedHashedKey()
                         }
                         it("records an identify event") {
                             expect(testContext.eventReporterMock.recordCallCount) == 1
@@ -565,19 +446,19 @@ final class LDClientSpec: QuickSpec {
                 testContext.featureFlagCachingMock.reset()
 
                 let newContext = LDContext.stub()
-                testContext.subject.internalIdentify(newContext: newContext)
+                testContext.subject.internalIdentify(newContext: newContext, useCache: .yes)
 
                 expect(testContext.subject.context) == newContext
                 expect(testContext.subject.service.context) == newContext
-                expect(testContext.serviceMock.clearFlagResponseCacheCallCount) == 1
+                expect(testContext.serviceMock.clearFlagResponseCacheCallCount) == 2
                 expect(testContext.makeFlagSynchronizerService?.context) == newContext
 
                 expect(testContext.subject.isOnline) == true
                 expect(testContext.subject.eventReporter.isOnline) == true
                 expect(testContext.subject.flagSynchronizer.isOnline) == true
 
-                expect(testContext.featureFlagCachingMock.retrieveFeatureFlagsCallCount) == 1
-                expect(testContext.featureFlagCachingMock.retrieveFeatureFlagsReceivedContextKey) == newContext.fullyQualifiedHashedKey()
+                expect(testContext.featureFlagCachingMock.getCachedDataCallCount) == 1
+                expect(testContext.featureFlagCachingMock.getCachedDataReceivedArguments?.cacheKey) == newContext.fullyQualifiedHashedKey()
 
                 expect(testContext.eventReporterMock.recordReceivedEvent?.kind == .identify).to(beTrue())
             }
@@ -587,19 +468,19 @@ final class LDClientSpec: QuickSpec {
                 testContext.featureFlagCachingMock.reset()
 
                 let newContext = LDContext.stub()
-                testContext.subject.internalIdentify(newContext: newContext)
+                testContext.subject.internalIdentify(newContext: newContext, useCache: .yes)
 
                 expect(testContext.subject.context) == newContext
                 expect(testContext.subject.service.context) == newContext
-                expect(testContext.serviceMock.clearFlagResponseCacheCallCount) == 1
+                expect(testContext.serviceMock.clearFlagResponseCacheCallCount) == 2
                 expect(testContext.makeFlagSynchronizerService?.context) == newContext
 
                 expect(testContext.subject.isOnline) == false
                 expect(testContext.subject.eventReporter.isOnline) == false
                 expect(testContext.subject.flagSynchronizer.isOnline) == false
 
-                expect(testContext.featureFlagCachingMock.retrieveFeatureFlagsCallCount) == 1
-                expect(testContext.featureFlagCachingMock.retrieveFeatureFlagsReceivedContextKey) == newContext.fullyQualifiedHashedKey()
+                expect(testContext.featureFlagCachingMock.getCachedDataCallCount) == 1
+                expect(testContext.featureFlagCachingMock.getCachedDataReceivedArguments?.cacheKey) == newContext.fullyQualifiedHashedKey()
 
                 expect(testContext.eventReporterMock.recordReceivedEvent?.kind == .identify).to(beTrue())
             }
@@ -610,7 +491,7 @@ final class LDClientSpec: QuickSpec {
                 testContext.start()
                 testContext.featureFlagCachingMock.reset()
 
-                testContext.subject.internalIdentify(newContext: newContext)
+                testContext.subject.internalIdentify(newContext: newContext, useCache: .yes)
 
                 expect(testContext.subject.context) == newContext
                 expect(testContext.flagStoreMock.replaceStoreCallCount) == 1
@@ -624,7 +505,7 @@ final class LDClientSpec: QuickSpec {
                 testContext.featureFlagCachingMock.reset()
 
                 let newContext = LDContext.stub()
-                testContext.subject.internalIdentify(newContext: newContext)
+                testContext.subject.internalIdentify(newContext: newContext, useCache: .yes)
 
                 expect(newContext.contextKeys().count) < testContext.subject.service.context.contextKeys().count
 
@@ -639,10 +520,10 @@ final class LDClientSpec: QuickSpec {
                 testContext.start()
                 testContext.featureFlagCachingMock.reset()
 
-                testContext.subject.internalIdentify(newContext: testContext.context)
-                testContext.subject.internalIdentify(newContext: testContext.context)
-                testContext.subject.internalIdentify(newContext: testContext.context)
-                testContext.subject.internalIdentify(newContext: testContext.context)
+                testContext.subject.internalIdentify(newContext: testContext.context, useCache: .yes)
+                testContext.subject.internalIdentify(newContext: testContext.context, useCache: .yes)
+                testContext.subject.internalIdentify(newContext: testContext.context, useCache: .yes)
+                testContext.subject.internalIdentify(newContext: testContext.context, useCache: .yes)
 
                 expect(testContext.flagStoreMock.replaceStoreCallCount) == 0
                 expect(testContext.makeFlagSynchronizerService?.context) == testContext.context
@@ -651,6 +532,52 @@ final class LDClientSpec: QuickSpec {
                 expect(testContext.subject.eventReporter.isOnline) == true
                 expect(testContext.subject.flagSynchronizer.isOnline) == true
                 expect(testContext.eventReporterMock.recordReceivedEvent?.kind == .identify).to(beTrue())
+            }
+
+            it("no cache requires no store interaction") {
+                let testContext = TestContext(startOnline: true)
+                testContext.start()
+                testContext.featureFlagCachingMock.reset()
+
+                testContext.subject.internalIdentify(newContext: testContext.context, useCache: .no)
+
+                expect(testContext.flagStoreMock.replaceStoreCallCount) == 0
+                expect(testContext.makeFlagSynchronizerService?.context) == testContext.context
+
+                expect(testContext.subject.isOnline) == true
+                expect(testContext.subject.eventReporter.isOnline) == true
+                expect(testContext.subject.flagSynchronizer.isOnline) == true
+                expect(testContext.eventReporterMock.recordReceivedEvent?.kind == .identify).to(beTrue())
+            }
+
+            it("ifAvailable requires no store information on cache miss") {
+                let testContext = TestContext(startOnline: true)
+                testContext.start()
+                testContext.featureFlagCachingMock.reset()
+
+                testContext.subject.internalIdentify(newContext: testContext.context, useCache: .ifAvailable)
+
+                expect(testContext.flagStoreMock.replaceStoreCallCount) == 0
+                expect(testContext.makeFlagSynchronizerService?.context) == testContext.context
+
+                expect(testContext.subject.isOnline) == true
+                expect(testContext.subject.eventReporter.isOnline) == true
+                expect(testContext.subject.flagSynchronizer.isOnline) == true
+                expect(testContext.eventReporterMock.recordReceivedEvent?.kind == .identify).to(beTrue())
+            }
+
+            it("ifAvailable updates store when cache is present") {
+                let stubFlags = FlagMaintainingMock.stubStoredItems()
+                let newContext = LDContext.stub()
+                let testContext = TestContext().withCached(contextKey: newContext.fullyQualifiedHashedKey(), flags: stubFlags.featureFlags)
+                testContext.start()
+                testContext.featureFlagCachingMock.reset()
+
+                testContext.subject.internalIdentify(newContext: newContext, useCache: .ifAvailable)
+
+                expect(testContext.subject.context) == newContext
+                expect(testContext.flagStoreMock.replaceStoreCallCount) == 1
+                expect(testContext.flagStoreMock.replaceStoreReceivedNewFlags) == stubFlags
             }
         }
     }
@@ -772,6 +699,15 @@ final class LDClientSpec: QuickSpec {
                 expect(receivedEvent?.data) == "abc"
                 expect(receivedEvent?.metricValue) == 5.0
             }
+            context("does not record when events are turned off") {
+                var config = LDConfig.stub(mobileKey: LDConfig.Constants.mockMobileKey, autoEnvAttributes: .disabled, isDebugBuild: false)
+                config.sendEvents = false
+                let testContext = TestContext(newConfig: config)
+                testContext.start()
+                let priorRecordedEvents = testContext.eventReporterMock.recordCallCount
+                testContext.subject.track(key: "customEvent", data: "abc", metricValue: 5.0)
+                expect(testContext.eventReporterMock.recordCallCount) == priorRecordedEvents
+            }
             context("does not record when client was stopped") {
                 let testContext = TestContext()
                 testContext.start()
@@ -835,6 +771,36 @@ final class LDClientSpec: QuickSpec {
                         expect(testContext.eventReporterMock.recordFlagEvaluationEventsReceivedArguments?.featureFlag).to(beNil())
                         expect(testContext.eventReporterMock.recordFlagEvaluationEventsReceivedArguments?.context) == testContext.context
                     }
+                }
+            }
+            context("flag store contains flags with prerequisites") {
+                it("records evaluation events for the prerequisites that exist") {
+                    let flagA = FeatureFlag(flagKey: "flagA", value: LDValue.bool(true), trackEvents: false, trackReason: false)
+                    let flagAB = FeatureFlag(flagKey: "flagAB", value: LDValue.bool(true), trackEvents: false, trackReason: false, prerequisites: ["flagA"])
+                    let flagAC = FeatureFlag(flagKey: "flagAC", value: LDValue.bool(true), trackEvents: false, trackReason: false, prerequisites: ["flagA"])
+                    let flagABD = FeatureFlag(flagKey: "flagABD", value: LDValue.bool(true), trackEvents: false, trackReason: false, prerequisites: ["flagAB"])
+                    let flags: [LDFlagKey: FeatureFlag] = ["flagA": flagA, "flagAB": flagAB, "flagAC": flagAC, "flagABD": flagABD]
+                    let storedItems = StoredItems(items: flags)
+                    testContext.flagStoreMock.replaceStore(newStoredItems: storedItems)
+                    var events = [FeatureEvent]()
+                    testContext.eventReporterMock.recordFlagEvaluationEventsCallback = {
+                        let args = testContext.eventReporterMock.recordFlagEvaluationEventsReceivedArguments!
+                        let event = FeatureEvent(key: args.flagKey, context: args.context, value: args.value, defaultValue: args.defaultValue, featureFlag: args.featureFlag, includeReason: args.includeReason, isDebug: false)
+                        events.append(event)
+                    }
+                    _ = testContext.subject.boolVariation(forKey: "flagA", defaultValue: DefaultFlagValues.bool)
+                    _ = testContext.subject.boolVariation(forKey: "flagAB", defaultValue: DefaultFlagValues.bool)
+                    _ = testContext.subject.boolVariation(forKey: "flagAC", defaultValue: DefaultFlagValues.bool)
+                    _ = testContext.subject.boolVariation(forKey: "flagABD", defaultValue: DefaultFlagValues.bool)
+                    expect(events.count) == 8
+                    expect(events[0].key) == "flagA"
+                    expect(events[1].key) == "flagA"
+                    expect(events[2].key) == "flagAB"
+                    expect(events[3].key) == "flagA"
+                    expect(events[4].key) == "flagAC"
+                    expect(events[5].key) == "flagA"
+                    expect(events[6].key) == "flagAB"
+                    expect(events[7].key) == "flagABD"
                 }
             }
         }
@@ -930,23 +896,23 @@ final class LDClientSpec: QuickSpec {
     private class func onSyncCompleteSuccessReplacingFlagsSpec() {
         let testContext = TestContext(startOnline: true)
         testContext.start()
-        testContext.subject.flagChangeNotifier = ClientServiceMockFactory().makeFlagChangeNotifier()
+        testContext.subject.flagChangeNotifier = ClientServiceMockFactory(config: testContext.config).makeFlagChangeNotifier()
 
         let newStoredItems = ["flag1": StorageItem.item(FeatureFlag(flagKey: "flag1"))]
         var updateDate: Date!
         waitUntil { done in
             testContext.changeNotifierMock.notifyObserversCallback = done
             updateDate = Date()
-            testContext.onSyncComplete?(.flagCollection(FeatureFlagCollection(newStoredItems.featureFlags)))
+            testContext.onSyncComplete?(.flagCollection((FeatureFlagCollection(newStoredItems.featureFlags), nil)))
         }
 
         expect(testContext.flagStoreMock.replaceStoreCallCount) == 1
         expect(testContext.flagStoreMock.replaceStoreReceivedNewFlags) == newStoredItems
 
-        expect(testContext.featureFlagCachingMock.storeFeatureFlagsCallCount) == 1
-        expect(testContext.featureFlagCachingMock.storeFeatureFlagsReceivedArguments?.storedItems) == newStoredItems
-        expect(testContext.featureFlagCachingMock.storeFeatureFlagsReceivedArguments?.contextKey) == testContext.context.fullyQualifiedHashedKey()
-        expect(testContext.featureFlagCachingMock.storeFeatureFlagsReceivedArguments?.lastUpdated).to(beCloseTo(updateDate, within: Constants.updateThreshold))
+        expect(testContext.featureFlagCachingMock.saveCachedDataCallCount) == 1
+        expect(testContext.featureFlagCachingMock.saveCachedDataReceivedArguments?.storedItems) == newStoredItems
+        expect(testContext.featureFlagCachingMock.saveCachedDataReceivedArguments?.cacheKey) == testContext.context.fullyQualifiedHashedKey()
+        expect(testContext.featureFlagCachingMock.saveCachedDataReceivedArguments?.lastUpdated).to(beCloseTo(updateDate, within: Constants.updateThreshold))
 
         expect(testContext.changeNotifierMock.notifyObserversCallCount) == 1
         expect(testContext.changeNotifierMock.notifyObserversReceivedArguments?.newFlags) == testContext.flagStoreMock.storedItems.featureFlags
@@ -957,7 +923,7 @@ final class LDClientSpec: QuickSpec {
         let stubFlags = FlagMaintainingMock.stubStoredItems()
         let testContext = TestContext(startOnline: true).withCached(flags: stubFlags.featureFlags)
         testContext.start()
-        testContext.subject.flagChangeNotifier = ClientServiceMockFactory().makeFlagChangeNotifier()
+        testContext.subject.flagChangeNotifier = ClientServiceMockFactory(config: testContext.config).makeFlagChangeNotifier()
         let updateFlag = FeatureFlag(flagKey: "abc")
 
         var updateDate: Date!
@@ -970,10 +936,10 @@ final class LDClientSpec: QuickSpec {
         expect(testContext.flagStoreMock.updateStoreCallCount) == 1
         expect(testContext.flagStoreMock.updateStoreReceivedUpdatedFlag) == updateFlag
 
-        expect(testContext.featureFlagCachingMock.storeFeatureFlagsCallCount) == 1
-        expect(testContext.featureFlagCachingMock.storeFeatureFlagsReceivedArguments?.storedItems) == testContext.flagStoreMock.storedItems
-        expect(testContext.featureFlagCachingMock.storeFeatureFlagsReceivedArguments?.contextKey) == testContext.context.fullyQualifiedHashedKey()
-        expect(testContext.featureFlagCachingMock.storeFeatureFlagsReceivedArguments?.lastUpdated).to(beCloseTo(updateDate, within: Constants.updateThreshold))
+        expect(testContext.featureFlagCachingMock.saveCachedDataCallCount) == 1
+        expect(testContext.featureFlagCachingMock.saveCachedDataReceivedArguments?.storedItems) == testContext.flagStoreMock.storedItems
+        expect(testContext.featureFlagCachingMock.saveCachedDataReceivedArguments?.cacheKey) == testContext.context.fullyQualifiedHashedKey()
+        expect(testContext.featureFlagCachingMock.saveCachedDataReceivedArguments?.lastUpdated).to(beCloseTo(updateDate, within: Constants.updateThreshold))
 
         expect(testContext.changeNotifierMock.notifyObserversCallCount) == 1
         expect(testContext.changeNotifierMock.notifyObserversReceivedArguments?.newFlags) == testContext.flagStoreMock.storedItems.featureFlags
@@ -984,7 +950,7 @@ final class LDClientSpec: QuickSpec {
         let stubFlags = FlagMaintainingMock.stubStoredItems()
         let testContext = TestContext(startOnline: true).withCached(flags: stubFlags.featureFlags)
         testContext.start()
-        testContext.subject.flagChangeNotifier = ClientServiceMockFactory().makeFlagChangeNotifier()
+        testContext.subject.flagChangeNotifier = ClientServiceMockFactory(config: testContext.config).makeFlagChangeNotifier()
         let deleteResponse = DeleteResponse(key: DarklyServiceMock.FlagKeys.int, version: DarklyServiceMock.Constants.version + 1)
 
         var updateDate: Date!
@@ -997,10 +963,10 @@ final class LDClientSpec: QuickSpec {
         expect(testContext.flagStoreMock.deleteFlagCallCount) == 1
         expect(testContext.flagStoreMock.deleteFlagReceivedDeleteResponse) == deleteResponse
 
-        expect(testContext.featureFlagCachingMock.storeFeatureFlagsCallCount) == 1
-        expect(testContext.featureFlagCachingMock.storeFeatureFlagsReceivedArguments?.storedItems.featureFlags) == testContext.flagStoreMock.storedItems.featureFlags
-        expect(testContext.featureFlagCachingMock.storeFeatureFlagsReceivedArguments?.contextKey) == testContext.context.fullyQualifiedHashedKey()
-        expect(testContext.featureFlagCachingMock.storeFeatureFlagsReceivedArguments?.lastUpdated).to(beCloseTo(updateDate, within: Constants.updateThreshold))
+        expect(testContext.featureFlagCachingMock.saveCachedDataCallCount) == 1
+        expect(testContext.featureFlagCachingMock.saveCachedDataReceivedArguments?.storedItems.featureFlags) == testContext.flagStoreMock.storedItems.featureFlags
+        expect(testContext.featureFlagCachingMock.saveCachedDataReceivedArguments?.cacheKey) == testContext.context.fullyQualifiedHashedKey()
+        expect(testContext.featureFlagCachingMock.saveCachedDataReceivedArguments?.lastUpdated).to(beCloseTo(updateDate, within: Constants.updateThreshold))
 
         expect(testContext.changeNotifierMock.notifyObserversCallCount) == 1
         expect(testContext.changeNotifierMock.notifyObserversReceivedArguments?.newFlags) == testContext.flagStoreMock.storedItems.featureFlags
@@ -1014,11 +980,11 @@ final class LDClientSpec: QuickSpec {
             it(ctx) {
                 let testContext = TestContext(startOnline: true)
                 testContext.start()
-                testContext.subject.flagChangeNotifier = ClientServiceMockFactory().makeFlagChangeNotifier()
+                testContext.subject.flagChangeNotifier = ClientServiceMockFactory(config: testContext.config).makeFlagChangeNotifier()
                 testContext.onSyncComplete?(.error(err))
 
                 expect(testContext.subject.isOnline) == !err.isClientUnauthorized
-                expect(testContext.featureFlagCachingMock.storeFeatureFlagsCallCount) == 0
+                expect(testContext.featureFlagCachingMock.saveCachedDataCallCount) == 0
                 expect(testContext.changeNotifierMock.notifyObserversCallCount) == 0
                 expect(testContext.subject.getConnectionInformation().lastFailedConnection).to(beCloseTo(Date(), within: 5.0))
                 testError(testContext.subject.getConnectionInformation().lastConnectionFailureReason)
@@ -1415,7 +1381,7 @@ final class LDClientSpec: QuickSpec {
             it("when client was started and after receiving flags") {
                 let testContext = TestContext(startOnline: true)
                 testContext.start()
-                testContext.onSyncComplete?(.flagCollection(FeatureFlagCollection([:])))
+                testContext.onSyncComplete?(.flagCollection((FeatureFlagCollection([:]), nil)))
 
                 expect(testContext.subject.isInitialized).toEventually(beTrue(), timeout: .seconds(2))
 
@@ -1428,11 +1394,10 @@ final class LDClientSpec: QuickSpec {
 
 extension FeatureFlagCachingMock {
     func reset() {
-        retrieveFeatureFlagsCallCount = 0
-        retrieveFeatureFlagsReceivedContextKey = nil
-        retrieveFeatureFlagsReturnValue = nil
-        storeFeatureFlagsCallCount = 0
-        storeFeatureFlagsReceivedArguments = nil
+        getCachedDataCallCount = 0
+        getCachedDataReturnValue = nil
+        saveCachedDataCallCount = 0
+        saveCachedDataReceivedArguments = nil
     }
 }
 

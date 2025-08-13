@@ -48,7 +48,7 @@ final class DiagnosticReporterSpec: XCTestCase {
             if withError {
                 error = DarklyServiceMock.Constants.error
             }
-            queuedResponses.append((nil, response, error))
+            queuedResponses.append((nil, response, error, nil))
         }
 
         func takeEvent() -> DiagnosticEvent {

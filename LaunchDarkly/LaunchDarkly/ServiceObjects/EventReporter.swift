@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 
 #if os(Linux) || os(Windows)
 import FoundationNetworking
@@ -18,20 +19,35 @@ protocol EventReporting {
     func flush(completion: CompletionClosure?)
 }
 
+class NullEventReporter: EventReporting {
+    var isOnline: Bool = true
+    var lastEventResponseDate: Date = Date()
+
+    func record(_ event: Event) {
+    }
+
+    func recordFlagEvaluationEvents(flagKey: LDFlagKey, value: LDValue, defaultValue: LDValue, featureFlag: FeatureFlag?, context: LDContext, includeReason: Bool) {
+    }
+
+    func flush(completion: CompletionClosure?) {
+        completion?()
+    }
+}
+
 class EventReporter: EventReporting {
     var isOnline: Bool {
         get { timerQueue.sync { eventReportTimer != nil } }
         set { timerQueue.sync { newValue ? startReporting() : stopReporting() } }
     }
 
-    private (set) var lastEventResponseDate: Date
+    private(set) var lastEventResponseDate: Date
 
     let service: DarklyServiceProvider
 
     private let eventQueue = DispatchQueue(label: "com.launchdarkly.eventSyncQueue", qos: .userInitiated)
     // These fields should only be used synchronized on the eventQueue
     private(set) var eventStore: [Event] = []
-    private(set) var flagRequestTracker = FlagRequestTracker()
+    private(set) var flagRequestTracker: FlagRequestTracker
 
     private var timerQueue = DispatchQueue(label: "com.launchdarkly.EventReporter.timerQueue")
     private var eventReportTimer: TimeResponding?
@@ -43,6 +59,7 @@ class EventReporter: EventReporting {
         self.service = service
         self.onSyncComplete = onSyncComplete
         self.lastEventResponseDate = Date()
+        self.flagRequestTracker = FlagRequestTracker(logger: service.config.logger)
     }
 
     func record(_ event: Event) {
@@ -52,7 +69,7 @@ class EventReporter: EventReporting {
 
     func recordNoSync(_ event: Event) {
         if self.eventStore.count >= self.service.config.eventCapacity {
-            Log.debug(self.typeName(and: #function) + "aborted. Event store is full")
+            os_log("%s aborted. Event store is full", log: service.config.logger, type: .debug, typeName(and: #function))
             self.service.diagnosticCache?.incrementDroppedEventCount()
             return
         }
@@ -101,7 +118,7 @@ class EventReporter: EventReporting {
     private func reportEvents(completion: CompletionClosure?) {
         guard isOnline
         else {
-            Log.debug(typeName(and: #function) + "aborted. EventReporter is offline")
+            os_log("%s aborted. EventReporter is offline", log: service.config.logger, type: .debug, typeName(and: #function))
             reportSyncComplete(.isOffline)
             completion?()
             return
@@ -110,17 +127,18 @@ class EventReporter: EventReporting {
         if flagRequestTracker.hasLoggedRequests {
             let summaryEvent = SummaryEvent(flagRequestTracker: flagRequestTracker)
             self.eventStore.append(summaryEvent)
-            flagRequestTracker = FlagRequestTracker()
+            flagRequestTracker = FlagRequestTracker(logger: service.config.logger)
         }
 
         guard !eventStore.isEmpty
         else {
-            Log.debug(typeName(and: #function) + "aborted. Event store is empty")
+            os_log("%s aborted. Event store is empty", log: service.config.logger, type: .debug, typeName(and: #function))
             reportSyncComplete(nil)
             completion?()
             return
         }
-        Log.debug(typeName(and: #function, appending: " - ") + "starting")
+
+        os_log("%s starting", log: service.config.logger, type: .debug, typeName(and: #function))
 
         let toPublish = self.eventStore
         self.eventStore = []
@@ -146,17 +164,17 @@ class EventReporter: EventReporting {
         }
         guard let eventData = try? encoder.encode(events)
         else {
-            Log.debug(self.typeName(and: #function) + "Failed to serialize event(s) for publication: \(events)")
+            os_log("%s Failed to serialize event(s) for publication: %s", log: service.config.logger, type: .debug, typeName(and: #function), String(describing: events))
             completion?()
             return
         }
-        self.service.publishEventData(eventData, payloadId) { _, urlResponse, error in
-            let shouldRetry = self.processEventResponse(sentEvents: events.count, response: urlResponse as? HTTPURLResponse, error: error, isRetry: false)
+        self.service.publishEventData(eventData, payloadId) { response in
+            let shouldRetry = self.processEventResponse(sentEvents: events.count, response: response.urlResponse as? HTTPURLResponse, error: response.error, isRetry: false)
             if shouldRetry {
-                Log.debug("Retrying event post after delay.")
+                os_log("%s Retrying event post after delay.", log: self.service.config.logger, type: .debug, self.typeName(and: #function))
                 DispatchQueue.global().asyncAfter(deadline: DispatchTime.now() + 1.0) {
-                    self.service.publishEventData(eventData, payloadId) { _, urlResponse, error in
-                        _ = self.processEventResponse(sentEvents: events.count, response: urlResponse as? HTTPURLResponse, error: error, isRetry: true)
+                    self.service.publishEventData(eventData, payloadId) { response in
+                        _ = self.processEventResponse(sentEvents: events.count, response: response.urlResponse as? HTTPURLResponse, error: response.error, isRetry: true)
                         completion?()
                     }
                 }
@@ -173,21 +191,21 @@ class EventReporter: EventReporting {
                 self.lastEventResponseDate = serverTime
             }
 
-            Log.debug(self.typeName(and: #function) + "Completed sending \(sentEvents) event(s)")
+            os_log("%s Completed sending %d event(s)", log: service.config.logger, type: .debug, typeName(and: #function), sentEvents)
             self.reportSyncComplete(nil)
             return false
         }
 
         if let statusCode = response?.statusCode, (400..<500).contains(statusCode) && ![400, 408, 429].contains(statusCode) {
-            Log.debug(typeName(and: #function) + "dropping events due to non-retriable response: \(String(describing: response))")
+            os_log("%s dropping events due to non-retriable response: %s", log: service.config.logger, type: .debug, typeName(and: #function), String(describing: response))
             self.reportSyncComplete(.response(response))
             return false
         }
 
-        Log.debug(typeName(and: #function) + "Sending events failed with error: \(String(describing: error)) response: \(String(describing: response))")
+        os_log("%s Sending events failed with error: %s response: %s", log: service.config.logger, type: .debug, typeName(and: #function), String(describing: error), String(describing: response))
 
         if isRetry {
-            Log.debug(typeName(and: #function) + "dropping events due to failed retry")
+            os_log("%s dropping events due to failed retry", log: service.config.logger, type: .debug, typeName(and: #function))
             if let error = error {
                 reportSyncComplete(.request(error))
             } else {

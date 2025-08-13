@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 import XCTest
 
 @testable import LaunchDarkly
@@ -11,7 +12,7 @@ final class EventSpec: XCTestCase {
         let event = FeatureEvent(key: "abc", context: context, value: true, defaultValue: false, featureFlag: featureFlag, includeReason: true, isDebug: false, creationDate: testDate)
         XCTAssertEqual(event.kind, Event.Kind.feature)
         XCTAssertEqual(event.key, "abc")
-        XCTAssertEqual(event.context, context)
+        XCTAssertTrue(event.context.contextHash() == context.contextHash())
         XCTAssertEqual(event.value, true)
         XCTAssertEqual(event.defaultValue, false)
         XCTAssertEqual(event.featureFlag, featureFlag)
@@ -74,7 +75,23 @@ final class EventSpec: XCTestCase {
             XCTAssertEqual(dict["key"], "event-key")
             XCTAssertEqual(dict["data"], ["abc", 12])
             XCTAssertEqual(dict["metricValue"], 0.5)
-            XCTAssertEqual(dict["contextKeys"], .object(["user": .string(context.fullyQualifiedKey())]))
+            XCTAssertEqual(dict["context"], .object([
+                "kind": .string("user"),
+                "key": .string(context.fullyQualifiedKey()),
+                "name": .string("stub.context.name"),
+                "firstName": .string("stub.context.firstName"),
+                "lastName": .string("stub.context.lastName"),
+                "country": .string("stub.context.country"),
+                "ip": .string("stub.context.ipAddress"),
+                "email": .string("stub.context@email.com"),
+                "avatar": .string("stub.context.avatar"),
+                "stub.context.custom.keyA": .string("stub.context.custom.valueA"),
+                "stub.context.custom.keyB": .bool(true),
+                "stub.context.custom.keyC": .number(1027),
+                "stub.context.custom.keyD": .number(2.71828),
+                "stub.context.custom.keyE": .array([.number(0), .number(1), .number(2)]),
+                "stub.context.custom.keyF": .object(["1": .number(1), "2": .number(2), "3": .number(3)])
+            ]))
             XCTAssertEqual(dict["creationDate"], .number(Double(event.creationDate.millisSince1970)))
         }
     }
@@ -87,7 +104,23 @@ final class EventSpec: XCTestCase {
             XCTAssertEqual(dict["kind"], "custom")
             XCTAssertEqual(dict["key"], "event-key")
             XCTAssertEqual(dict["data"], ["key": "val"])
-            XCTAssertEqual(dict["contextKeys"], .object(["user": .string(context.fullyQualifiedKey())]))
+            XCTAssertEqual(dict["context"], .object([
+                "kind": .string("user"),
+                "key": .string(context.fullyQualifiedKey()),
+                "name": .string("stub.context.name"),
+                "firstName": .string("stub.context.firstName"),
+                "lastName": .string("stub.context.lastName"),
+                "country": .string("stub.context.country"),
+                "ip": .string("stub.context.ipAddress"),
+                "email": .string("stub.context@email.com"),
+                "avatar": .string("stub.context.avatar"),
+                "stub.context.custom.keyA": .string("stub.context.custom.valueA"),
+                "stub.context.custom.keyB": .bool(true),
+                "stub.context.custom.keyC": .number(1027),
+                "stub.context.custom.keyD": .number(2.71828),
+                "stub.context.custom.keyE": .array([.number(0), .number(1), .number(2)]),
+                "stub.context.custom.keyF": .object(["1": .number(1), "2": .number(2), "3": .number(3)])
+            ]))
             XCTAssertEqual(dict["creationDate"], .number(Double(event.creationDate.millisSince1970)))
         }
     }
@@ -100,7 +133,23 @@ final class EventSpec: XCTestCase {
             XCTAssertEqual(dict["kind"], "custom")
             XCTAssertEqual(dict["key"], "event-key")
             XCTAssertEqual(dict["metricValue"], 2.5)
-            XCTAssertEqual(dict["contextKeys"], .object(["user": .string(context.fullyQualifiedKey())]))
+            XCTAssertEqual(dict["context"], .object([
+                "kind": .string("user"),
+                "key": .string(context.fullyQualifiedKey()),
+                "name": .string("stub.context.name"),
+                "firstName": .string("stub.context.firstName"),
+                "lastName": .string("stub.context.lastName"),
+                "country": .string("stub.context.country"),
+                "ip": .string("stub.context.ipAddress"),
+                "email": .string("stub.context@email.com"),
+                "avatar": .string("stub.context.avatar"),
+                "stub.context.custom.keyA": .string("stub.context.custom.valueA"),
+                "stub.context.custom.keyB": .bool(true),
+                "stub.context.custom.keyC": .number(1027),
+                "stub.context.custom.keyD": .number(2.71828),
+                "stub.context.custom.keyE": .array([.number(0), .number(1), .number(2)]),
+                "stub.context.custom.keyF": .object(["1": .number(1), "2": .number(2), "3": .number(3)])
+            ]))
             XCTAssertEqual(dict["creationDate"], .number(Double(event.creationDate.millisSince1970)))
         }
     }
@@ -118,11 +167,23 @@ final class EventSpec: XCTestCase {
                 XCTAssertEqual(dict["default"], false)
                 XCTAssertEqual(dict["variation"], 2)
                 XCTAssertEqual(dict["version"], 3)
-                if isDebug {
-                    XCTAssertEqual(dict["context"], encodeToLDValue(context))
-                } else {
-                    XCTAssertEqual(dict["contextKeys"], .object(["user": .string(context.fullyQualifiedKey())]))
-                }
+            XCTAssertEqual(dict["context"], .object([
+                "kind": .string("user"),
+                "key": .string(context.fullyQualifiedKey()),
+                "name": .string("stub.context.name"),
+                "firstName": .string("stub.context.firstName"),
+                "lastName": .string("stub.context.lastName"),
+                "country": .string("stub.context.country"),
+                "ip": .string("stub.context.ipAddress"),
+                "email": .string("stub.context@email.com"),
+                "avatar": .string("stub.context.avatar"),
+                "stub.context.custom.keyA": .string("stub.context.custom.valueA"),
+                "stub.context.custom.keyB": .bool(true),
+                "stub.context.custom.keyC": .number(1027),
+                "stub.context.custom.keyD": .number(2.71828),
+                "stub.context.custom.keyE": .array([.number(0), .number(1), .number(2)]),
+                "stub.context.custom.keyF": .object(["1": .number(1), "2": .number(2), "3": .number(3)])
+            ]))
                 XCTAssertEqual(dict["creationDate"], .number(Double(event.creationDate.millisSince1970)))
             }
         }
@@ -142,11 +203,23 @@ final class EventSpec: XCTestCase {
                 XCTAssertEqual(dict["variation"], 2)
                 XCTAssertEqual(dict["version"], 3)
                 XCTAssertEqual(dict["reason"], ["kind": "OFF"])
-                if isDebug {
-                    XCTAssertEqual(dict["context"], encodeToLDValue(context))
-                } else {
-                    XCTAssertEqual(dict["contextKeys"], .object(["user": .string(context.fullyQualifiedKey())]))
-                }
+            XCTAssertEqual(dict["context"], .object([
+                "kind": .string("user"),
+                "key": .string(context.fullyQualifiedKey()),
+                "name": .string("stub.context.name"),
+                "firstName": .string("stub.context.firstName"),
+                "lastName": .string("stub.context.lastName"),
+                "country": .string("stub.context.country"),
+                "ip": .string("stub.context.ipAddress"),
+                "email": .string("stub.context@email.com"),
+                "avatar": .string("stub.context.avatar"),
+                "stub.context.custom.keyA": .string("stub.context.custom.valueA"),
+                "stub.context.custom.keyB": .bool(true),
+                "stub.context.custom.keyC": .number(1027),
+                "stub.context.custom.keyD": .number(2.71828),
+                "stub.context.custom.keyE": .array([.number(0), .number(1), .number(2)]),
+                "stub.context.custom.keyF": .object(["1": .number(1), "2": .number(2), "3": .number(3)])
+            ]))
                 XCTAssertEqual(dict["creationDate"], .number(Double(event.creationDate.millisSince1970)))
             }
         }
@@ -164,11 +237,23 @@ final class EventSpec: XCTestCase {
                 XCTAssertEqual(dict["value"], .null)
                 XCTAssertEqual(dict["default"], .null)
                 XCTAssertEqual(dict["reason"], ["kind": "OFF"])
-                if isDebug {
-                    XCTAssertEqual(dict["context"], encodeToLDValue(context))
-                } else {
-                    XCTAssertEqual(dict["contextKeys"], .object(["user": .string(context.fullyQualifiedKey())]))
-                }
+            XCTAssertEqual(dict["context"], .object([
+                "kind": .string("user"),
+                "key": .string(context.fullyQualifiedKey()),
+                "name": .string("stub.context.name"),
+                "firstName": .string("stub.context.firstName"),
+                "lastName": .string("stub.context.lastName"),
+                "country": .string("stub.context.country"),
+                "ip": .string("stub.context.ipAddress"),
+                "email": .string("stub.context@email.com"),
+                "avatar": .string("stub.context.avatar"),
+                "stub.context.custom.keyA": .string("stub.context.custom.valueA"),
+                "stub.context.custom.keyB": .bool(true),
+                "stub.context.custom.keyC": .number(1027),
+                "stub.context.custom.keyD": .number(2.71828),
+                "stub.context.custom.keyE": .array([.number(0), .number(1), .number(2)]),
+                "stub.context.custom.keyF": .object(["1": .number(1), "2": .number(2), "3": .number(3)])
+            ]))
                 XCTAssertEqual(dict["creationDate"], .number(Double(event.creationDate.millisSince1970)))
             }
         }
@@ -184,11 +269,23 @@ final class EventSpec: XCTestCase {
                 XCTAssertEqual(dict["key"], "event-key")
                 XCTAssertEqual(dict["value"], true)
                 XCTAssertEqual(dict["default"], false)
-                if isDebug {
-                    XCTAssertEqual(dict["context"], encodeToLDValue(context))
-                } else {
-                    XCTAssertEqual(dict["contextKeys"], .object(["user": .string(context.fullyQualifiedKey())]))
-                }
+            XCTAssertEqual(dict["context"], .object([
+                "kind": .string("user"),
+                "key": .string(context.fullyQualifiedKey()),
+                "name": .string("stub.context.name"),
+                "firstName": .string("stub.context.firstName"),
+                "lastName": .string("stub.context.lastName"),
+                "country": .string("stub.context.country"),
+                "ip": .string("stub.context.ipAddress"),
+                "email": .string("stub.context@email.com"),
+                "avatar": .string("stub.context.avatar"),
+                "stub.context.custom.keyA": .string("stub.context.custom.valueA"),
+                "stub.context.custom.keyB": .bool(true),
+                "stub.context.custom.keyC": .number(1027),
+                "stub.context.custom.keyD": .number(2.71828),
+                "stub.context.custom.keyE": .array([.number(0), .number(1), .number(2)]),
+                "stub.context.custom.keyF": .object(["1": .number(1), "2": .number(2), "3": .number(3)])
+            ]))
                 XCTAssertEqual(dict["creationDate"], .number(Double(event.creationDate.millisSince1970)))
             }
         }
@@ -205,7 +302,23 @@ final class EventSpec: XCTestCase {
             XCTAssertEqual(dict["value"], true)
             XCTAssertEqual(dict["default"], false)
             XCTAssertEqual(dict["version"], 3)
-            XCTAssertEqual(dict["context"], encodeToLDValue(context))
+            XCTAssertEqual(dict["context"], .object([
+                "kind": .string("user"),
+                "key": .string(context.fullyQualifiedKey()),
+                "name": .string("stub.context.name"),
+                "firstName": .string("stub.context.firstName"),
+                "lastName": .string("stub.context.lastName"),
+                "country": .string("stub.context.country"),
+                "ip": .string("stub.context.ipAddress"),
+                "email": .string("stub.context@email.com"),
+                "avatar": .string("stub.context.avatar"),
+                "stub.context.custom.keyA": .string("stub.context.custom.valueA"),
+                "stub.context.custom.keyB": .bool(true),
+                "stub.context.custom.keyC": .number(1027),
+                "stub.context.custom.keyD": .number(2.71828),
+                "stub.context.custom.keyE": .array([.number(0), .number(1), .number(2)]),
+                "stub.context.custom.keyF": .object(["1": .number(1), "2": .number(2), "3": .number(3)])
+            ]))
         }}
     }
 
@@ -216,14 +329,30 @@ final class EventSpec: XCTestCase {
             XCTAssertEqual(dict.count, 4)
                 XCTAssertEqual(dict["kind"], "identify")
                 XCTAssertEqual(dict["key"], .string(context.fullyQualifiedKey()))
-                XCTAssertEqual(dict["context"], encodeToLDValue(context))
+            XCTAssertEqual(dict["context"], .object([
+                "kind": .string("user"),
+                "key": .string(context.fullyQualifiedKey()),
+                "name": .string("stub.context.name"),
+                "firstName": .string("stub.context.firstName"),
+                "lastName": .string("stub.context.lastName"),
+                "country": .string("stub.context.country"),
+                "ip": .string("stub.context.ipAddress"),
+                "email": .string("stub.context@email.com"),
+                "avatar": .string("stub.context.avatar"),
+                "stub.context.custom.keyA": .string("stub.context.custom.valueA"),
+                "stub.context.custom.keyB": .bool(true),
+                "stub.context.custom.keyC": .number(1027),
+                "stub.context.custom.keyD": .number(2.71828),
+                "stub.context.custom.keyE": .array([.number(0), .number(1), .number(2)]),
+                "stub.context.custom.keyF": .object(["1": .number(1), "2": .number(2), "3": .number(3)])
+            ]))
                 XCTAssertEqual(dict["creationDate"], .number(Double(event.creationDate.millisSince1970)))
         }
     }
 
     func testSummaryEventEncoding() {
         let flag = FeatureFlag(flagKey: "bool-flag", variation: 1, version: 5, flagVersion: 2)
-        var flagRequestTracker = FlagRequestTracker()
+        var flagRequestTracker = FlagRequestTracker(logger: OSLog(subsystem: "com.launchdarkly", category: "tests"))
         flagRequestTracker.trackRequest(flagKey: "bool-flag", reportedValue: false, featureFlag: flag, defaultValue: true, context: LDContext.stub())
         flagRequestTracker.trackRequest(flagKey: "bool-flag", reportedValue: false, featureFlag: flag, defaultValue: true, context: LDContext.stub())
         let event = SummaryEvent(flagRequestTracker: flagRequestTracker, endDate: Date())
@@ -234,9 +363,9 @@ final class EventSpec: XCTestCase {
             XCTAssertEqual(dict["endDate"], .number(Double(event.endDate.millisSince1970)))
             valueIsObject(dict["features"]) { features in
                 XCTAssertEqual(features.count, 1)
-                let counter = FlagCounter()
-                counter.trackRequest(reportedValue: false, featureFlag: flag, defaultValue: true, context: LDContext.stub())
-                counter.trackRequest(reportedValue: false, featureFlag: flag, defaultValue: true, context: LDContext.stub())
+                let counter = FlagCounter(defaultValue: true)
+                counter.trackRequest(reportedValue: false, featureFlag: flag, context: LDContext.stub())
+                counter.trackRequest(reportedValue: false, featureFlag: flag, context: LDContext.stub())
                 XCTAssertEqual(features["bool-flag"], encodeToLDValue(counter))
             }
         }
@@ -245,7 +374,7 @@ final class EventSpec: XCTestCase {
 
 extension Event: Equatable {
     public static func == (_ lhs: Event, _ rhs: Event) -> Bool {
-        let config = [LDContext.UserInfoKeys.includePrivateAttributes: true]
+        let config = [LDContext.UserInfoKeys.includePrivateAttributes: true, LDContext.UserInfoKeys.redactAttributes: false]
         return encodeToLDValue(lhs, userInfo: config) == encodeToLDValue(rhs, userInfo: config)
     }
 }

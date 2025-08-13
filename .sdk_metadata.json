@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "sdks": {
+    "swift-client-sdk": {
+      "name": "iOS SDK",
+      "type": "client-side",
+      "languages": [
+        "Swift", "Objective-C"
+      ],
+      "userAgents": ["iOS", "macOS", "tvOS", "watchOS"]
+    }
+  }
+}
