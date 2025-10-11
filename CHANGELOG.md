@@ -2,6 +2,10 @@
 
 All notable changes to the LaunchDarkly iOS SDK will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org).
 
+### Features
+* bumping swift-tools-version:5.5 and macosx to be compatible with otel
+- masOS "10.13" -> "12.00"
+
 ## [9.16.0](https://github.com/launchdarkly/ios-client-sdk/compare/9.15.0...9.16.0) (2025-09-11)
 
 
