@@ -1,4 +1,4 @@
-// swift-tools-version:5.3
+// swift-tools-version:5.5
 
 import PackageDescription
 
@@ -6,7 +6,7 @@ let package = Package(
     name: "LaunchDarkly",
     platforms: [
         .iOS(.v13),
-        .macOS(.v10_15),
+        .macOS(.v12),
         .watchOS(.v6),
         .tvOS(.v13)
     ],
