@@ -855,20 +855,36 @@ public class LDClient {
             start(serviceFactory: serviceFactory, config: config, context: context)
             completion?(true) // offline is considered a short circuited timed out case
         } else {
-            let startTime = Date().timeIntervalSince1970
+           // let startTime = Date().timeIntervalSince1970
         
             TimeoutExecutor.run(
                 timeout: startWaitSeconds,
                 queue: internalCompletedQueue,
                 operation: { done in
-                    Self.start(serviceFactory: serviceFactory, config: config, context: context) {
-                        let onTime = startWaitSeconds > Date().timeIntervalSince1970 - startTime
-                        done(!onTime)
+                    start(serviceFactory: serviceFactory, config: config, context: context) {
+//                        let onTime = startWaitSeconds > Date().timeIntervalSince1970 - startTime
+                        done(false)
                     }
                 },
                 timeoutValue: true,
                 completion: completion
             )
+            
+//            var completed = false
+//            start(serviceFactory: serviceFactory, config: config, context: context) {
+//                internalCompletedQueue.async {
+//                    if startTime + startWaitSeconds > Date().timeIntervalSince1970 && !completed {
+//                        completed = true
+//                        completion?(false) // false for not timedOut
+//                    }
+//                }
+//            }
+//            internalCompletedQueue.asyncAfter(deadline: .now() + startWaitSeconds) {
+//                if !completed {
+//                    completed = true
+//                    completion?(true) // true for timedOut
+//                }
+//            }
         }
     }
 

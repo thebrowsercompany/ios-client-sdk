@@ -43,7 +43,8 @@ final class TimeoutExecutor {
         let lockQueue = DispatchQueue(label: "launchdarkly.timeout.executor.lock")
         var finished = false
 
-        func finish(_ value: @autoclosure () -> T) {
+        // Start the user operation
+        operation { value in
             var shouldCall = false
             lockQueue.sync {
                 if !finished {
@@ -52,17 +53,20 @@ final class TimeoutExecutor {
                 }
             }
             guard shouldCall else { return }
-            queue.async { completion(timeoutValue()) }
+            queue.async { completion(value) }
         }
 
-        // Start the user operation (they can call `done` from any queue)
-        operation { value in
-            finish(value)
-        }
-
-        // Timeout fallback scheduled
+        // Timeout fallback
         queue.asyncAfter(deadline: .now() + timeout) {
-            finish(timeoutValue())
+            var shouldCall = false
+            lockQueue.sync {
+                if !finished {
+                    finished = true
+                    shouldCall = true
+                }
+            }
+            guard shouldCall else { return }
+            completion(timeoutValue())
         }
     }
 }
