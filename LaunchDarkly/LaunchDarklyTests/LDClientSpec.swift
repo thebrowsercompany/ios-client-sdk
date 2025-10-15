@@ -326,20 +326,12 @@ final class LDClientSpec: QuickSpec {
                 }
             }
             context("after receiving flags") {
-                beforeEach {
-                    completed = false
-                    didTimeOut = nil
-                    startTime = nil
-                    completeTime = nil
-                }
                 it("does complete without timeout") {
-                    //expect(didTimeOut) == nil
                     testContext.start(completion: startCompletion)
                     testContext.onSyncComplete?(.flagCollection((FeatureFlagCollection([:]), nil)))
                     expect(completed).toEventually(beTrue(), timeout: DispatchTimeInterval.seconds(2))
                 }
                 it("does complete with timeout") {
-                    //expect(didTimeOut) == nil
                     waitUntil(timeout: .seconds(3)) { done in
                         testContext.start(timeOut: 5.0, timeOutCompletion: startTimeoutCompletion(done))
                         testContext.onSyncComplete?(.flagCollection((FeatureFlagCollection([:]), nil)))
