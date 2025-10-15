@@ -38,6 +38,10 @@
 		3D3AB9462A4F16FE003AECF1 /* ReportingConsts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D3AB9422A4F16FE003AECF1 /* ReportingConsts.swift */; };
 		3D3AB9482A570F3A003AECF1 /* ModifierSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D3AB9472A570F3A003AECF1 /* ModifierSpec.swift */; };
 		3D9A12582A73236800698B8D /* UtilSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D9A12572A73236800698B8D /* UtilSpec.swift */; };
+		50EE85C22EA0487F007CC662 /* TimeoutExecutor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50EE85C12EA0487F007CC662 /* TimeoutExecutor.swift */; };
+		50EE85C32EA0487F007CC662 /* TimeoutExecutor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50EE85C12EA0487F007CC662 /* TimeoutExecutor.swift */; };
+		50EE85C42EA0487F007CC662 /* TimeoutExecutor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50EE85C12EA0487F007CC662 /* TimeoutExecutor.swift */; };
+		50EE85C52EA0487F007CC662 /* TimeoutExecutor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50EE85C12EA0487F007CC662 /* TimeoutExecutor.swift */; };
 		830BF933202D188E006DF9B1 /* HTTPURLRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 830BF932202D188E006DF9B1 /* HTTPURLRequest.swift */; };
 		830DB3AC22380A3E00D65D25 /* HTTPHeadersSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 830DB3AB22380A3E00D65D25 /* HTTPHeadersSpec.swift */; };
 		830DB3AE2239B54900D65D25 /* URLResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 830DB3AD2239B54900D65D25 /* URLResponse.swift */; };
@@ -429,6 +433,7 @@
 		3D3AB9422A4F16FE003AECF1 /* ReportingConsts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportingConsts.swift; sourceTree = "<group>"; };
 		3D3AB9472A570F3A003AECF1 /* ModifierSpec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModifierSpec.swift; sourceTree = "<group>"; };
 		3D9A12572A73236800698B8D /* UtilSpec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilSpec.swift; sourceTree = "<group>"; };
+		50EE85C12EA0487F007CC662 /* TimeoutExecutor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeoutExecutor.swift; sourceTree = "<group>"; };
 		830BF932202D188E006DF9B1 /* HTTPURLRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPURLRequest.swift; sourceTree = "<group>"; };
 		830DB3AB22380A3E00D65D25 /* HTTPHeadersSpec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPHeadersSpec.swift; sourceTree = "<group>"; };
 		830DB3AD2239B54900D65D25 /* URLResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLResponse.swift; sourceTree = "<group>"; };
@@ -887,6 +892,7 @@
 		83FEF8D91F2666BF001CF12C /* ServiceObjects */ = {
 			isa = PBXGroup;
 			children = (
+				50EE85C12EA0487F007CC662 /* TimeoutExecutor.swift */,
 				A3A8BCD12B7EAA89009A77E4 /* SheddingQueue.swift */,
 				A358D6CF2A4DD45000270C60 /* EnvironmentReporting */,
 				8354AC742243168800CDE602 /* Cache */,
@@ -1355,6 +1361,7 @@
 				3D3AB9462A4F16FE003AECF1 /* ReportingConsts.swift in Sources */,
 				831188522113ADF700D77CB5 /* KeyedValueCache.swift in Sources */,
 				831188582113AE0F00D77CB5 /* EventReporter.swift in Sources */,
+				50EE85C42EA0487F007CC662 /* TimeoutExecutor.swift in Sources */,
 				A358D6F52A4DEB4C00270C60 /* EnvironmentReporterBuilder.swift in Sources */,
 				8311885D2113AE2500D77CB5 /* DarklyService.swift in Sources */,
 				831188692113AE5900D77CB5 /* ObjcLDConfig.swift in Sources */,
@@ -1481,6 +1488,7 @@
 				A3A8BCD42B7EAA89009A77E4 /* SheddingQueue.swift in Sources */,
 				B4C9D43A2489E20A004A9B03 /* DiagnosticReporter.swift in Sources */,
 				831EF36A20655E730001C643 /* ObjcLDChangedFlag.swift in Sources */,
+				50EE85C22EA0487F007CC662 /* TimeoutExecutor.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1508,6 +1516,7 @@
 				3D3AB9432A4F16FE003AECF1 /* ReportingConsts.swift in Sources */,
 				A31088172837DC0400184942 /* Reference.swift in Sources */,
 				8354EFE21F26380700C05156 /* Event.swift in Sources */,
+				50EE85C52EA0487F007CC662 /* TimeoutExecutor.swift in Sources */,
 				A358D6F22A4DEB4C00270C60 /* EnvironmentReporterBuilder.swift in Sources */,
 				C408884923033B7500420721 /* ConnectionInformation.swift in Sources */,
 				831D8B721F71D3E700ED65E8 /* DarklyService.swift in Sources */,
@@ -1639,6 +1648,7 @@
 				3D3AB9442A4F16FE003AECF1 /* ReportingConsts.swift in Sources */,
 				83D9EC7E2062DEAB004D7FA6 /* FlagChangeObserver.swift in Sources */,
 				83D9EC7F2062DEAB004D7FA6 /* FlagsUnchangedObserver.swift in Sources */,
+				50EE85C32EA0487F007CC662 /* TimeoutExecutor.swift in Sources */,
 				A358D6F32A4DEB4C00270C60 /* EnvironmentReporterBuilder.swift in Sources */,
 				83D9EC802062DEAB004D7FA6 /* Event.swift in Sources */,
 				83D9EC822062DEAB004D7FA6 /* ClientServiceFactory.swift in Sources */,

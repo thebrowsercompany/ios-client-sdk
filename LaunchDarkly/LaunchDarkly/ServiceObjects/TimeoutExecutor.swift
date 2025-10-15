@@ -52,8 +52,10 @@ final class TimeoutExecutor {
                     shouldCall = true
                 }
             }
-            guard shouldCall else { return }
-            queue.async { completion(value) }
+            
+            if shouldCall {
+                queue.async { completion(value) }
+            }
         }
 
         // Timeout fallback
@@ -65,8 +67,10 @@ final class TimeoutExecutor {
                     shouldCall = true
                 }
             }
-            guard shouldCall else { return }
-            completion(timeoutValue())
+            
+            if shouldCall {
+                completion(timeoutValue())
+            }
         }
     }
 }
