@@ -433,7 +433,7 @@
 		3D3AB9422A4F16FE003AECF1 /* ReportingConsts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportingConsts.swift; sourceTree = "<group>"; };
 		3D3AB9472A570F3A003AECF1 /* ModifierSpec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModifierSpec.swift; sourceTree = "<group>"; };
 		3D9A12572A73236800698B8D /* UtilSpec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilSpec.swift; sourceTree = "<group>"; };
-		50EE85C12EA0487F007CC662 /* TimeoutExecutor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeoutExecutor.swift; sourceTree = "<group>"; };
+		50EE85C12EA0487F007CC662 /* TimeoutExecutor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TimeoutExecutor.swift; sourceTree = "<group>"; };
 		830BF932202D188E006DF9B1 /* HTTPURLRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPURLRequest.swift; sourceTree = "<group>"; };
 		830DB3AB22380A3E00D65D25 /* HTTPHeadersSpec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPHeadersSpec.swift; sourceTree = "<group>"; };
 		830DB3AD2239B54900D65D25 /* URLResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLResponse.swift; sourceTree = "<group>"; };
