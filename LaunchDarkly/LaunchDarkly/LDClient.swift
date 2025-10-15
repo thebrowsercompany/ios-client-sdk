@@ -385,20 +385,29 @@ public class LDClient {
             os_log("%s LDClient.identify was called with a timeout greater than %f seconds. We recommend a timeout of less than %f seconds.", log: config.logger, type: .info, self.typeName(and: #function), LDClient.longTimeoutInterval, LDClient.longTimeoutInterval)
         }
 
-        var cancel = false
+        // Use a thread-safe way to handle cancellation/completion state
+        let completionQueue = DispatchQueue(label: "com.launchdarkly.ldclient.identify-completion", attributes: .concurrent)
+        var completed = false
+
+        let finish: (IdentifyResult) -> Void = { result in
+            var shouldCall = false
+            completionQueue.sync(flags: .barrier) {
+                if !completed {
+                    completed = true
+                    shouldCall = true
+                }
+            }
+            if shouldCall {
+                completion(result)
+            }
+        }
 
         DispatchQueue.global().asyncAfter(deadline: .now() + timeout) {
-            guard !cancel else { return }
-
-            cancel = true
-            completion(.timeout)
+            finish(.timeout)
         }
 
         identify(context: context, useCache: useCache) { result in
-            guard !cancel else { return }
-
-            cancel = true
-            completion(result)
+            finish(result)
         }
     }
 
