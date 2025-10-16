@@ -4,7 +4,7 @@ import XCTest
 
 final class TimeoutExecutorSpec: XCTestCase {
 
-    // Helper: create a specific queue and tag it so we can assert where completion ran.
+    // Create a specific queue and tag it so we can assert where completion ran.
     private func makeTaggedQueue(label: String = "com.test.timeout.queue") -> DispatchQueue {
         let q = DispatchQueue(label: label)
         let key = DispatchSpecificKey<String>()
