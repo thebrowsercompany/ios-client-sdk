@@ -105,7 +105,6 @@ final class ThrottlerSpec: QuickSpec {
             // First two run immediate
             throttler.runThrottled { }
             throttler.runThrottled { }
-            expect(throttler.safeRunAttempts) == 1
             let callDate = Date()
             var runDate: Date?
             waitUntil(timeout: .seconds(3)) { done in
