@@ -6,6 +6,36 @@ All notable changes to the LaunchDarkly iOS SDK will be documented in this file.
 * bumping swift-tools-version:5.5 and macosx to be compatible with otel
 - masOS "10.13" -> "12.00"
 
+## [10.0.0](https://github.com/launchdarkly/ios-client-sdk/compare/9.15.0...10.0.0) (2025-10-29)
+
+
+### ⚠ BREAKING CHANGES
+
+* Timeout executor to fix race conditions on timeout ([#457](https://github.com/launchdarkly/ios-client-sdk/issues/457))
+* Bump swift-tools-version to 5.5 and macosx to 12.00 to be compatible with Otel ([#453](https://github.com/launchdarkly/ios-client-sdk/issues/453))
+* update doc and podspec
+* 
+* bump target versions to iOS13 and others ([#451](https://github.com/launchdarkly/ios-client-sdk/issues/451))
+* drop support for iOS12, watchOS 4.0, tvOS 12.0, masOS 10.13
+
+### Features
+
+* Timeout executor to fix race conditions on timeout ([#457](https://github.com/launchdarkly/ios-client-sdk/issues/457)) ([f76f15e](https://github.com/launchdarkly/ios-client-sdk/commit/f76f15e0b9156da7364b30d10765d50b0d4f8b10))
+
+
+### Bug Fixes
+
+* not multithread safe access to cancel var ([3184f84](https://github.com/launchdarkly/ios-client-sdk/commit/3184f842b9bb4fad9327225e420c3ebcf2fee06a))
+
+
+### Miscellaneous Chores
+
+* chore!:  ([b3e7faf](https://github.com/launchdarkly/ios-client-sdk/commit/b3e7fafb4ea1f96e8cf25923304f79c891759efd))
+* Bump swift-tools-version to 5.5 and macosx to 12.00 to be compatible with Otel ([#453](https://github.com/launchdarkly/ios-client-sdk/issues/453)) ([068a422](https://github.com/launchdarkly/ios-client-sdk/commit/068a42287c64d01d0034daec37bbe6155722ab5e))
+* bump target versions to iOS13 and others ([#451](https://github.com/launchdarkly/ios-client-sdk/issues/451)) ([9d25460](https://github.com/launchdarkly/ios-client-sdk/commit/9d254608d0d76c6bddccf0eaa403e3cf179f709e))
+* drop support for iOS12, watchOS 4.0, tvOS 12.0, masOS 10.13 ([320c60d](https://github.com/launchdarkly/ios-client-sdk/commit/320c60d1c9b7b81bdc9d4e1314763765063c92c2))
+* update doc and podspec ([cbc0f75](https://github.com/launchdarkly/ios-client-sdk/commit/cbc0f75dd4f81b845ccbc7b7669f999f8a225e01))
+
 ## [9.16.0](https://github.com/launchdarkly/ios-client-sdk/compare/9.15.0...9.16.0) (2025-09-11)
 
 
