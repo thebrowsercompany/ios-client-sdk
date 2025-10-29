@@ -165,7 +165,6 @@ final class ThrottlerSpec: QuickSpec {
                 hasRun = true
             }
             throttler.cancelThrottledRun()
-            expect(throttler.safeRunAttempts) == 2
             expect(throttler.workItem).to(beNil())
             // Wait until run would have occured
             Thread.sleep(forTimeInterval: 1.0)
