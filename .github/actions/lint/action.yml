@@ -1,0 +1,38 @@
+name: Lint
+description: 'Run podspec, swiftlint, and generated code checks.'
+
+runs:
+  using: composite
+  steps:
+    - name: Install swiftlint
+      shell: bash
+      run: brew install swiftlint
+
+    - name: Install sourcery
+      shell: bash
+      run: brew install sourcery
+
+    - name: Install cocoapods
+      shell: bash
+      run: gem install cocoapods
+
+    - name: Lint the podspec
+      shell: bash
+      # --quick skips building since dedicated build jobs already compile all platforms
+      run: pod lib lint LaunchDarkly.podspec --allow-warnings --quick
+
+    - name: Run swiftlint on SDK
+      shell: bash
+      run: swiftlint lint
+
+    - name: Run swiftlint on ContractTests
+      shell: bash
+      run: |
+        cd ./ContractTests
+        swiftlint lint
+
+    - name: Check generated code is up to date
+      shell: bash
+      run: |
+        sourcery
+        git diff --exit-code LaunchDarkly/GeneratedCode/ || (echo "::error::Generated code is out of date. Run 'sourcery' locally and commit the result." && exit 1)
