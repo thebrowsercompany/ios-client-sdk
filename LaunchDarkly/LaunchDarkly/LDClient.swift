@@ -836,17 +836,6 @@ public class LDClient {
                 credential: mobileKey
             )
 
-            // add all the plugin hooks
-            for plugin in config.plugins {
-                // Catch to protect against any runtime exceptions from plugin
-                do {
-                    let pluginHooks = try plugin.getHooks(metadata: environmentMetadata)
-                    instance.hooks.append(contentsOf: pluginHooks)
-                } catch {
-                    os_log("Exception thrown getting hooks for plugin %@. Unable to get hooks, plugin will not be registered.", log: config.logger, type: .error, plugin.getMetadata().getName())
-                }
-            }
-
             // now register the client with all the plugins
             for plugin in config.plugins {
                 do {
@@ -949,6 +938,23 @@ public class LDClient {
         self.serviceFactory = serviceFactory
         self.hooks = Array(configuration.hooks)
         environmentReporter = self.serviceFactory.makeEnvironmentReporter(config: configuration)
+
+        // Collect plugin hooks before calling beforeIdentify, so plugin hooks participate in the init identify lifecycle.
+        let initSdkMetadata = SdkMetadata(name: SystemCapabilities.systemName, version: ReportingConsts.sdkVersion)
+        let initEnvironmentMetadata = EnvironmentMetadata(
+            applicationInfo: environmentReporter.applicationInfo,
+            sdkMetadata: initSdkMetadata,
+            credential: configuration.mobileKey
+        )
+        for plugin in configuration.plugins {
+            do {
+                let pluginHooks = try plugin.getHooks(metadata: initEnvironmentMetadata)
+                self.hooks.append(contentsOf: pluginHooks)
+            } catch {
+                os_log("Exception thrown getting hooks for plugin %@. Unable to get hooks, plugin will not be registered.", log: configuration.logger, type: .error, plugin.getMetadata().getName())
+            }
+        }
+
         flagCache = self.serviceFactory.makeFeatureFlagCache(mobileKey: configuration.mobileKey, maxCachedContexts: configuration.maxCachedContexts)
         flagStore = self.serviceFactory.makeFlagStore()
         flagChangeNotifier = self.serviceFactory.makeFlagChangeNotifier()
@@ -962,10 +968,18 @@ public class LDClient {
             context = AutoEnvContextModifier(environmentReporter: environmentReporter, logger: config.logger).modifyContext(context)
         }
 
+        var hookState: IdentifyHookState? = nil
+        if !hooks.isEmpty {
+            let seriesContext = IdentifySeriesContext(context: context, methodName: "init")
+            let seriesData = hooks.map { hook in hook.beforeIdentify(seriesContext: seriesContext, seriesData: EvaluationSeriesData()) }
+            hookState = IdentifyHookState(seriesContext: seriesContext, seriesData: seriesData, hooksSnapshot: hooks)
+        }
+
         service = self.serviceFactory.makeDarklyServiceProvider(config: config, context: context, envReporter: environmentReporter)
         diagnosticReporter = self.serviceFactory.makeDiagnosticReporter(config: config, service: service, environmentReporter: environmentReporter)
         eventReporter = self.serviceFactory.makeEventReporter(config: config, service: service)
         connectionInformation = self.serviceFactory.makeConnectionInformation()
+
         let cachedData = flagCache.getCachedData(cacheKey: context.fullyQualifiedHashedKey(), contextHash: context.contextHash())
         flagSynchronizer = self.serviceFactory.makeFlagSynchronizer(streamingMode: config.allowStreamingMode ? config.streamingMode : .polling,
                                                                     pollingInterval: config.flagPollingInterval(runMode: runMode),
@@ -1001,6 +1015,9 @@ public class LDClient {
         internalSetOnline(configuration.startOnline) {
             os_log("%s LDClient started", log: configuration.logger, type: .debug, self.typeName(and: #function))
             completion?()
+            if let state = hookState {
+                self.executeAfterIdentifyHooks(state: state, result: .complete)
+            }
         }
     }
 }
