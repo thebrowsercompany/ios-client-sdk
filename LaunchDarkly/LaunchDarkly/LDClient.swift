@@ -721,6 +721,21 @@ public class LDClient {
             String(describing: data),
             String(describing: metricValue))
         eventReporter.record(event)
+
+        executeAfterTrackHooks(key: key, data: data, metricValue: metricValue)
+    }
+
+    private func executeAfterTrackHooks(key: String, data: LDValue?, metricValue: Double?) {
+        guard !hooks.isEmpty else {
+            return
+        }
+
+        let seriesContext = TrackSeriesContext(key: key, context: context, data: data, metricValue: metricValue)
+        // The track series has only an "after" stage, so hooks run in registration order, as required by
+        // the shared SDK contract tests (unlike the evaluation/identify after-stages, which run in reverse).
+        hooks.forEach { hook in
+            hook.afterTrack(seriesContext: seriesContext)
+        }
     }
 
     /**
