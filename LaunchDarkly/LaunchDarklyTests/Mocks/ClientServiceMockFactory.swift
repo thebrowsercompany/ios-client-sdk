@@ -76,7 +76,11 @@ final class ClientServiceMockFactory: ClientServiceCreating {
         makeEventReporterReceivedService = service
         onEventSyncComplete = onSyncComplete
 
-        return EventReportingMock()
+        if config.sendEvents {
+            return EventReportingMock()
+        } else {
+            return NullEventReporter()
+        }
     }
 
     func makeEventReporter(config: LDConfig, service: DarklyServiceProvider) -> EventReporting {
