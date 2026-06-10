@@ -6,6 +6,85 @@ All notable changes to the LaunchDarkly iOS SDK will be documented in this file.
 * bumping swift-tools-version:5.5 and macosx to be compatible with otel
 - masOS "10.13" -> "12.00"
 
+## [12.0.0](https://github.com/thebrowsercompany/ios-client-sdk/compare/11.2.0...12.0.0) (2026-06-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* put public completions into main-thread (makes it Swift6 compatible) ([#465](https://github.com/thebrowsercompany/ios-client-sdk/issues/465))
+* Timeout executor to fix race conditions on timeout ([#457](https://github.com/thebrowsercompany/ios-client-sdk/issues/457))
+* Bump swift-tools-version to 5.5 and macosx to 12.00 to be compatible with Otel ([#453](https://github.com/thebrowsercompany/ios-client-sdk/issues/453))
+* update doc and podspec
+* 
+* bump target versions to iOS13 and others ([#451](https://github.com/thebrowsercompany/ios-client-sdk/issues/451))
+* drop support for iOS12, watchOS 4.0, tvOS 12.0, masOS 10.13
+
+### Features
+
+* Add `LDConfig.sendEvents` option to disable all events ([#414](https://github.com/thebrowsercompany/ios-client-sdk/issues/414)) ([9a51844](https://github.com/thebrowsercompany/ios-client-sdk/commit/9a5184436ed76edd1cecfc81963888196157b1be))
+* Add cache usage option for identify calls ([#408](https://github.com/thebrowsercompany/ios-client-sdk/issues/408)) ([b928345](https://github.com/thebrowsercompany/ios-client-sdk/commit/b928345cabcdc66e2dffc7e260c2764fc18d07b2))
+* Add initial support for hooks ([#370](https://github.com/thebrowsercompany/ios-client-sdk/issues/370)) ([93239fc](https://github.com/thebrowsercompany/ios-client-sdk/commit/93239fc1dbcdaa4791f5c0f22aa50704a03a84bc))
+* Add new identify method with time out support ([#344](https://github.com/thebrowsercompany/ios-client-sdk/issues/344)) ([34ba8ab](https://github.com/thebrowsercompany/ios-client-sdk/commit/34ba8ab380dfc56aa21d2e13fadb634da0a01bdb))
+* Add option to enable compression of event payloads ([#399](https://github.com/thebrowsercompany/ios-client-sdk/issues/399)) ([ae4131f](https://github.com/thebrowsercompany/ios-client-sdk/commit/ae4131ff961507fc6e52823e26a20c7b2b7962c4))
+* Adds experimental plugin functionality. ([41c8ad5](https://github.com/thebrowsercompany/ios-client-sdk/commit/41c8ad5bdcd7bfc0efc28e20ddb94f6287417826))
+* adds LD_OBJC_EXCLUDE_PURE_SWIFT_APIS compiler flag. ([#386](https://github.com/thebrowsercompany/ios-client-sdk/issues/386)) ([fef65f5](https://github.com/thebrowsercompany/ios-client-sdk/commit/fef65f588151aab1a8fdbd423d64d91dde7ffb3d))
+* Adds support for client-side prerequisite events ([#409](https://github.com/thebrowsercompany/ios-client-sdk/issues/409)) ([d4ad59c](https://github.com/thebrowsercompany/ios-client-sdk/commit/d4ad59c0614fa8acb5b30ed0d7c3e507c3e264d1))
+* adds support for the track hook ([#504](https://github.com/thebrowsercompany/ios-client-sdk/issues/504)) ([4d6b10f](https://github.com/thebrowsercompany/ios-client-sdk/commit/4d6b10ff3704dc5524ebdcbecdfbf2add77884eb))
+* allow any type instead encodable in evaluation series data ([#446](https://github.com/thebrowsercompany/ios-client-sdk/issues/446)) ([0d7c902](https://github.com/thebrowsercompany/ios-client-sdk/commit/0d7c902ce3095b2a2419919e5306e527fe48cb02))
+* Honor polling interval between restarts ([#355](https://github.com/thebrowsercompany/ios-client-sdk/issues/355)) ([bd58864](https://github.com/thebrowsercompany/ios-client-sdk/commit/bd58864e940f8be24b11da14df5c483dac858a0f))
+* Identify hooks ([#462](https://github.com/thebrowsercompany/ios-client-sdk/issues/462)) ([0461f6a](https://github.com/thebrowsercompany/ios-client-sdk/commit/0461f6a9983f9706d8f894a1ee39910e28240ce9))
+* Implement shedding identity queue ([#343](https://github.com/thebrowsercompany/ios-client-sdk/issues/343)) ([393a28c](https://github.com/thebrowsercompany/ios-client-sdk/commit/393a28c73cdcece4edfba373aa9ec9e5c4ae4080))
+* Inline context for custom events ([26fa397](https://github.com/thebrowsercompany/ios-client-sdk/commit/26fa3972f21e7aebc10ce2726ffca28575ac7e8c))
+* Inline contexts for all evaluation events ([#332](https://github.com/thebrowsercompany/ios-client-sdk/issues/332)) ([a0f795b](https://github.com/thebrowsercompany/ios-client-sdk/commit/a0f795b8b089233917af5fcfd1d7a4d83ffb6767))
+* Introduce variation method with generic return types ([#342](https://github.com/thebrowsercompany/ios-client-sdk/issues/342)) ([7ff2ffb](https://github.com/thebrowsercompany/ios-client-sdk/commit/7ff2ffbc9e651114356c8972546ef177b73d0aeb))
+* Move datacompression dependency into local file ([#469](https://github.com/thebrowsercompany/ios-client-sdk/issues/469)) ([860674b](https://github.com/thebrowsercompany/ios-client-sdk/commit/860674b5572411bb2ff4dd3d86054fd71e3e1a54))
+* put public completions into main-thread (makes it Swift6 compatible) ([#465](https://github.com/thebrowsercompany/ios-client-sdk/issues/465)) ([e712fb1](https://github.com/thebrowsercompany/ios-client-sdk/commit/e712fb14a139deb3f50c2df9fdb4694c5e067e88))
+* Redact anonymous attributes within feature events ([#333](https://github.com/thebrowsercompany/ios-client-sdk/issues/333)) ([0fd5dbd](https://github.com/thebrowsercompany/ios-client-sdk/commit/0fd5dbd382f80547508d0f8828f2b522ca033c73))
+* Store and use e-tag header between SDK initializations ([#268](https://github.com/thebrowsercompany/ios-client-sdk/issues/268)) ([701aaa8](https://github.com/thebrowsercompany/ios-client-sdk/commit/701aaa8c7e1a910e5bf7cbd0a5b03b94683cc665))
+* Timeout executor to fix race conditions on timeout ([#457](https://github.com/thebrowsercompany/ios-client-sdk/issues/457)) ([f76f15e](https://github.com/thebrowsercompany/ios-client-sdk/commit/f76f15e0b9156da7364b30d10765d50b0d4f8b10))
+* Update caching strategy to allow for greater cache use ([#404](https://github.com/thebrowsercompany/ios-client-sdk/issues/404)) ([62587ad](https://github.com/thebrowsercompany/ios-client-sdk/commit/62587ad565fefbc79cd6c0293257744c4ce54d5e))
+
+
+### Bug Fixes
+
+* Add default implementation for hook methods ([#384](https://github.com/thebrowsercompany/ios-client-sdk/issues/384)) ([4461043](https://github.com/thebrowsercompany/ios-client-sdk/commit/446104318048e49b420e4d26f3b50b79007b66a9))
+* Add missing files to build project ([#476](https://github.com/thebrowsercompany/ios-client-sdk/issues/476)) ([afca63c](https://github.com/thebrowsercompany/ios-client-sdk/commit/afca63c70ea331e4a5179e9609ae2e2e5182d4a0))
+* Add missing privacy manifest resource for SPM ([#360](https://github.com/thebrowsercompany/ios-client-sdk/issues/360)) ([48f06cf](https://github.com/thebrowsercompany/ios-client-sdk/commit/48f06cf6025283e00b8375e874c464f9f0cf9d91))
+* Add missing privacy tracking fields in manifest ([#362](https://github.com/thebrowsercompany/ios-client-sdk/issues/362)) ([7439997](https://github.com/thebrowsercompany/ios-client-sdk/commit/743999791137c4dbab9d2668035fc034bc6a12ce))
+* Add objective-c binding for `LDConfig.logger` ([#365](https://github.com/thebrowsercompany/ios-client-sdk/issues/365)) ([eae8d78](https://github.com/thebrowsercompany/ios-client-sdk/commit/eae8d78cfaad27b5910d1f00e3f9acfc173d1c7d))
+* Add privacy manifest  ([#334](https://github.com/thebrowsercompany/ios-client-sdk/issues/334)) ([154fde7](https://github.com/thebrowsercompany/ios-client-sdk/commit/154fde7e1cae7ed5474f5adf89525f7f1448befc))
+* adds multithread protections for LDClient.start(...) ([#382](https://github.com/thebrowsercompany/ios-client-sdk/issues/382)) ([8fd47e4](https://github.com/thebrowsercompany/ios-client-sdk/commit/8fd47e49290c4fe640b52a84c64b4ef6c7d28afb))
+* app hang in didEnterBackground by making ConnectionInformationStore writes async ([#489](https://github.com/thebrowsercompany/ios-client-sdk/issues/489)) ([72b0ab4](https://github.com/thebrowsercompany/ios-client-sdk/commit/72b0ab49a035ff4b338db620464b50a673176d01))
+* Call identify hooks during init. ([#487](https://github.com/thebrowsercompany/ios-client-sdk/issues/487)) ([844d5d4](https://github.com/thebrowsercompany/ios-client-sdk/commit/844d5d4cbf6833025b835b536dd737880d9fdac5))
+* configured logger is now also used for logging LDEventSource log messages ([#390](https://github.com/thebrowsercompany/ios-client-sdk/issues/390)) ([7a3e67a](https://github.com/thebrowsercompany/ios-client-sdk/commit/7a3e67a628a4a6f5185571704754ade14ba9eac5))
+* Deprecate calling `start` without a timeout parameter ([#364](https://github.com/thebrowsercompany/ios-client-sdk/issues/364)) ([65d88a4](https://github.com/thebrowsercompany/ios-client-sdk/commit/65d88a451550831feeb882f8a608e9fad2734c8d))
+* Ensure anonymous context is valid ([#338](https://github.com/thebrowsercompany/ios-client-sdk/issues/338)) ([65406cc](https://github.com/thebrowsercompany/ios-client-sdk/commit/65406cc68b52cc50726d671e19fb804bb52f2a20))
+* Ensure secondary environments use correct mobile key ([#347](https://github.com/thebrowsercompany/ios-client-sdk/issues/347)) ([e92054c](https://github.com/thebrowsercompany/ios-client-sdk/commit/e92054c6c3c0b6a5bb04706a8466b92dd433b4e4))
+* fixes race condition that could lead to multiple start completion invocations ([#429](https://github.com/thebrowsercompany/ios-client-sdk/issues/429)) ([17d1ad4](https://github.com/thebrowsercompany/ios-client-sdk/commit/17d1ad4971d17d04c03a1ce0fa268ec4ff424e92))
+* Flake unit tests ([#459](https://github.com/thebrowsercompany/ios-client-sdk/issues/459)) ([452b2c4](https://github.com/thebrowsercompany/ios-client-sdk/commit/452b2c4f036a4efc6f41dfb98272e69bc260cf1a))
+* improving performance of FlagSynchronizer creation ([#420](https://github.com/thebrowsercompany/ios-client-sdk/issues/420)) ([e9575a0](https://github.com/thebrowsercompany/ios-client-sdk/commit/e9575a0ff998c916c0a61ed226a032bd2b82f578))
+* LDContext equality is no longer order dependent ([#265](https://github.com/thebrowsercompany/ios-client-sdk/issues/265)) ([683e0c3](https://github.com/thebrowsercompany/ios-client-sdk/commit/683e0c3b189b10c1a14eddd13d19c79783aa6e64))
+* LDContext equality is no longer order dependent ([#266](https://github.com/thebrowsercompany/ios-client-sdk/issues/266)) ([3b0cf06](https://github.com/thebrowsercompany/ios-client-sdk/commit/3b0cf069bf426013bacbb310e002d63157cfc0d4))
+* Mark  NSPrivacyCollectedDataTypeTracking as false in privacy manifest ([#366](https://github.com/thebrowsercompany/ios-client-sdk/issues/366)) ([fac9030](https://github.com/thebrowsercompany/ios-client-sdk/commit/fac9030e9f9a327d1e914102a2c982f8008fe5ae))
+* not multithread safe access to cancel var ([3184f84](https://github.com/thebrowsercompany/ios-client-sdk/commit/3184f842b9bb4fad9327225e420c3ebcf2fee06a))
+* Prevent null value changes to observe listeners ([#352](https://github.com/thebrowsercompany/ios-client-sdk/issues/352)) ([c1f1926](https://github.com/thebrowsercompany/ios-client-sdk/commit/c1f1926cf00e45b36f7861e12a5121f89fb6be68))
+* Replace simple logger with os_log statements ([#340](https://github.com/thebrowsercompany/ios-client-sdk/issues/340)) ([7ba4397](https://github.com/thebrowsercompany/ios-client-sdk/commit/7ba43973e379ce5b057baad5860ed313a016c34b))
+* replaced inefficient string logic for sync complete log ([#425](https://github.com/thebrowsercompany/ios-client-sdk/issues/425)) ([2099bbe](https://github.com/thebrowsercompany/ios-client-sdk/commit/2099bbe7042d2257038612030ab35396596240a2))
+* Sort private attributes for improved stable encoding ([#401](https://github.com/thebrowsercompany/ios-client-sdk/issues/401)) ([90bf896](https://github.com/thebrowsercompany/ios-client-sdk/commit/90bf89624687f8e01cdbcfc9c108df23b4c71c02))
+* start time warning log now uses float wildcard for string interpolation of time interval ([#393](https://github.com/thebrowsercompany/ios-client-sdk/issues/393)) ([573c99b](https://github.com/thebrowsercompany/ios-client-sdk/commit/573c99bafbe95b22cad0b48b395fa9610e463327))
+* updates diagnostic cache to be memory only to remove concurrency bug ([#502](https://github.com/thebrowsercompany/ios-client-sdk/issues/502)) ([efe112c](https://github.com/thebrowsercompany/ios-client-sdk/commit/efe112c4789228ecaa7bb10f1a40e1f88870628d))
+* Use resource_bundle for privacy manifest in podspec ([#361](https://github.com/thebrowsercompany/ios-client-sdk/issues/361)) ([971a4c4](https://github.com/thebrowsercompany/ios-client-sdk/commit/971a4c4abb6144c80af5af3b71f4336dde917f20))
+* Use stable encoding format to increase cache hits ([#267](https://github.com/thebrowsercompany/ios-client-sdk/issues/267)) ([40a5d01](https://github.com/thebrowsercompany/ios-client-sdk/commit/40a5d0114ccbc4f699e58dddbe8b3dc8f842f72b))
+
+
+### Miscellaneous Chores
+
+* chore!:  ([b3e7faf](https://github.com/thebrowsercompany/ios-client-sdk/commit/b3e7fafb4ea1f96e8cf25923304f79c891759efd))
+* Bump swift-tools-version to 5.5 and macosx to 12.00 to be compatible with Otel ([#453](https://github.com/thebrowsercompany/ios-client-sdk/issues/453)) ([068a422](https://github.com/thebrowsercompany/ios-client-sdk/commit/068a42287c64d01d0034daec37bbe6155722ab5e))
+* bump target versions to iOS13 and others ([#451](https://github.com/thebrowsercompany/ios-client-sdk/issues/451)) ([9d25460](https://github.com/thebrowsercompany/ios-client-sdk/commit/9d254608d0d76c6bddccf0eaa403e3cf179f709e))
+* drop support for iOS12, watchOS 4.0, tvOS 12.0, masOS 10.13 ([320c60d](https://github.com/thebrowsercompany/ios-client-sdk/commit/320c60d1c9b7b81bdc9d4e1314763765063c92c2))
+* update doc and podspec ([cbc0f75](https://github.com/thebrowsercompany/ios-client-sdk/commit/cbc0f75dd4f81b845ccbc7b7669f999f8a225e01))
+
 ## [11.2.0](https://github.com/launchdarkly/ios-client-sdk/compare/11.1.3...11.2.0) (2026-06-03)
 
 
