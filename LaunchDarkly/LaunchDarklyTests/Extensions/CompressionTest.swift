@@ -2,6 +2,12 @@ import XCTest
 
 @testable import LaunchDarkly
 
+#if os(Windows)
+private func arc4random() -> UInt32 {
+    UInt32.random(in: UInt32.min...UInt32.max)
+}
+#endif
+
 extension Data {
     func gzip_gunzip() -> Data? { return c_gzip()?.c_gunzip() }
 

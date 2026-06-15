@@ -37,12 +37,16 @@ let package = Package(
             name: "LaunchDarkly",
             dependencies: [
                 .product(name: "LDSwiftEventSource", package: "LDSwiftEventSource"),
+                .target(name: "OSLog", condition: .when(platforms: [.windows])),
             ],
             path: "LaunchDarkly/LaunchDarkly",
             exclude: osSpecificExcludes(),
             resources: [
                 .process("PrivacyInfo.xcprivacy")
             ]),
+        .target(
+            name: "OSLog",
+            path: "LaunchDarkly/OSLog"),
         .testTarget(
             name: "LaunchDarklyTests",
             dependencies: osSpecificLDTestsDependencies(),
