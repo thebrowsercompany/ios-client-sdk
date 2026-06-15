@@ -96,4 +96,35 @@ class CompressionTest: XCTestCase {
 
         XCTAssertNil(zipped_blob.gunzip())
     }
+
+    func testGzipHeaderCRCInFooterFails() {
+        let gzipWithHeaderCRCInFooter = Data([
+            0x1f, 0x8b, 0x08, 0b00010, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+        ])
+
+        XCTAssertNil(gzipWithHeaderCRCInFooter.gunzip())
+    }
+
+    func testGzipExtraFieldInFooterFails() {
+        let gzipWithExtraFieldInFooter = Data([
+            0x1f, 0x8b, 0x08, 0b00100, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03,
+            0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00
+        ])
+
+        XCTAssertNil(gzipWithExtraFieldInFooter.gunzip())
+    }
+
+    func testGzipFileNameInFooterFails() {
+        let gzipWithFileNameInFooter = Data([
+            0x1f, 0x8b, 0x08, 0b01000, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03,
+            0x61, 0x62, 0x63, 0x64,
+            0x65, 0x66, 0x67, 0x68
+        ])
+
+        XCTAssertNil(gzipWithFileNameInFooter.gunzip())
+    }
 }

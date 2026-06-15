@@ -60,6 +60,7 @@ func osSpecificLDTestsDependencies() -> [Target.Dependency] {
     #if os(Linux) || os(Windows)
     [
         "LaunchDarkly",
+        .target(name: "OSLog", condition: .when(platforms: [.windows])),
         .product(name: "Quick", package: "Quick"),
         .product(name: "Nimble", package: "Nimble")
     ]

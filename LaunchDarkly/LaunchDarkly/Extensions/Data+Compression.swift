@@ -464,11 +464,9 @@ private extension Data {
         windowsStoredDeflate(self)
     }
 
-    func windowsInflate(expectedSize: Int? = nil) -> Data? {
+    func windowsInflate() -> Data? {
         guard !isEmpty else { return nil }
-        let inflated = windowsStoredInflate(self)
-        guard expectedSize == nil || inflated?.count == expectedSize else { return nil }
-        return inflated
+        return windowsStoredInflate(self)
     }
 
     func windowsGzip() -> Data? {
@@ -503,55 +501,55 @@ private extension Data {
 
         let flags = self[3]
         var position = WindowsCompression.gzipHeaderSize
+        let footerStart = count - WindowsCompression.gzipFooterSize
 
         if flags & WindowsCompression.gzipExtraFlag != 0 {
-            guard position + 2 <= count else { return nil }
+            guard footerStart - position >= 2 else { return nil }
             let extraLength = Int(littleEndianUInt16(at: position))
             position += 2
-            guard position + extraLength <= count else { return nil }
+            guard extraLength <= footerStart - position else { return nil }
             position += extraLength
         }
 
         if flags & WindowsCompression.gzipNameFlag != 0 {
-            guard let nextPosition = indexAfterNullTerminatedField(startingAt: position) else {
+            guard let nextPosition = indexAfterNullTerminatedField(startingAt: position, limit: footerStart) else {
                 return nil
             }
             position = nextPosition
         }
 
         if flags & WindowsCompression.gzipCommentFlag != 0 {
-            guard let nextPosition = indexAfterNullTerminatedField(startingAt: position) else {
+            guard let nextPosition = indexAfterNullTerminatedField(startingAt: position, limit: footerStart) else {
                 return nil
             }
             position = nextPosition
         }
 
         if flags & WindowsCompression.gzipHeaderCRCFlag != 0 {
-            guard position + 2 <= count else { return nil }
+            guard footerStart - position >= 2 else { return nil }
             position += 2
         }
 
-        guard position < count else { return nil }
+        guard position < footerStart else { return nil }
         let compressedStart = position
-        let footerStart = count - WindowsCompression.gzipFooterSize
         let compressedEnd = footerStart
 
         let expectedCrc32 = littleEndianUInt32(at: footerStart)
         let expectedSize = littleEndianUInt32(at: footerStart + 4)
         let deflated = Data(self[compressedStart..<compressedEnd])
-        guard let inflated = deflated.windowsInflate(expectedSize: Int(expectedSize)) else { return nil }
+        guard let inflated = deflated.windowsInflate() else { return nil }
         guard UInt32(truncatingIfNeeded: inflated.count) == expectedSize else { return nil }
         guard inflated.crc32().checksum == expectedCrc32 else { return nil }
 
         return inflated
     }
 
-    private func indexAfterNullTerminatedField(startingAt offset: Int) -> Int? {
+    private func indexAfterNullTerminatedField(startingAt offset: Int, limit: Int) -> Int? {
         var offset = offset
-        while offset < count, self[offset] != 0x00 {
+        while offset < limit, self[offset] != 0x00 {
             offset += 1
         }
-        guard offset < count else { return nil }
+        guard offset < limit else { return nil }
         return offset + 1
     }
 
@@ -635,14 +633,14 @@ private func windowsStoredInflate(_ input: Data) -> Data? {
         guard blockType == 0 else { return nil }
         offset += 1
 
-        guard offset + 4 <= input.count else { return nil }
+        guard input.count - offset >= 4 else { return nil }
         let length = UInt16(input[offset]) | UInt16(input[offset + 1]) << 8
         let invertedLength = UInt16(input[offset + 2]) | UInt16(input[offset + 3]) << 8
         guard length == ~invertedLength else { return nil }
         offset += 4
 
         let blockLength = Int(length)
-        guard offset + blockLength <= input.count else { return nil }
+        guard blockLength <= input.count - offset else { return nil }
         result.append(input[offset..<(offset + blockLength)])
         offset += blockLength
 
