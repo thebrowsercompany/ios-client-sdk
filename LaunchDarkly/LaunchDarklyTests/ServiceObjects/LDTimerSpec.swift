@@ -18,13 +18,23 @@ final class LDTimerSpec: QuickSpec {
         }
     }
 
+    #if SWIFT_PACKAGE
+    override class func spec() {
+        specContents()
+    }
+    #else
     override func spec() {
+        Self.specContents()
+    }
+    #endif
+
+    private class func specContents() {
         initSpec()
         timerFiredSpec()
         cancelSpec()
     }
 
-    private func initSpec() {
+    private class func initSpec() {
         describe("init") {
             it("creates a repeating timer") {
                 let testContext = TestContext(execute: { })
@@ -38,7 +48,7 @@ final class LDTimerSpec: QuickSpec {
         }
     }
 
-    private func timerFiredSpec() {
+    private class func timerFiredSpec() {
         describe("timerFired") {
             it("calls execute on the fireQueue multiple times") {
                 var fireCount = 0
@@ -66,7 +76,7 @@ final class LDTimerSpec: QuickSpec {
         }
     }
 
-    private func cancelSpec() {
+    private class func cancelSpec() {
         describe("cancel") {
             it("cancels the timer") {
                 let testContext = TestContext(execute: { })

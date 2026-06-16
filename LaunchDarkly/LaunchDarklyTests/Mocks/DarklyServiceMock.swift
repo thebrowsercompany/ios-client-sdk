@@ -1,10 +1,16 @@
 import Foundation
 import Quick
 import Nimble
+#if !os(Linux) && !os(Windows)
 import OHHTTPStubs
 import OHHTTPStubsSwift
+#endif
 import LDSwiftEventSource
 @testable import LaunchDarkly
+
+#if os(Linux) || os(Windows)
+import FoundationNetworking
+#endif
 
 final class DarklyServiceMock: DarklyServiceProvider {
     struct FlagKeys {
@@ -46,7 +52,7 @@ final class DarklyServiceMock: DarklyServiceProvider {
     }
 
     struct Constants {
-        static let error = NSError(domain: NSURLErrorDomain, code: Int(CFNetworkErrors.cfurlErrorResourceUnavailable.rawValue), userInfo: nil)
+        static let error = NSError(domain: NSURLErrorDomain, code: Int(URLError.resourceUnavailable.rawValue), userInfo: nil)
         static let jsonErrorString = "Bad json data"
         static let errorData = jsonErrorString.data(using: .utf8)!
 
@@ -96,8 +102,11 @@ final class DarklyServiceMock: DarklyServiceProvider {
     var config: LDConfig
     var context: LDContext
     var diagnosticCache: DiagnosticCaching? = nil
+    var flagRequestEtag: String?
 
+    #if !os(Linux) && !os(Windows)
     var activationBlocks = [(testBlock: HTTPStubsTestBlock, callback: ((URLRequest, HTTPStubsDescriptor, HTTPStubsResponse) -> Void))]()
+    #endif
 
     init(config: LDConfig = LDConfig.stub, context: LDContext = LDContext.stub()) {
         self.config = config
@@ -116,6 +125,7 @@ final class DarklyServiceMock: DarklyServiceProvider {
     var clearFlagResponseCacheCallCount = 0
     func resetFlagResponseCache(etag: String?) {
         clearFlagResponseCacheCallCount += 1
+        flagRequestEtag = etag
     }
 
     var createdEventSource: DarklyStreamingProviderMock?
@@ -161,6 +171,8 @@ extension DarklyServiceMock {
     var flagHost: String? {
         config.baseUrl.host
     }
+
+    #if !os(Linux) && !os(Windows)
     var flagRequestStubTest: HTTPStubsTestBlock {
         isScheme(Constants.schemeHttps) && isHost(flagHost!)
     }
@@ -214,6 +226,7 @@ extension DarklyServiceMock {
             stubbedFlagResponse = (nil, response, Constants.error, nil)
         }
     }
+    #endif
 
     func flagStubName(statusCode: Int, useReport: Bool) -> String {
         "Flag request stub using method \(useReport ? URLRequest.HTTPMethods.report : URLRequest.HTTPMethods.get) with response status code \(statusCode)"
@@ -224,6 +237,8 @@ extension DarklyServiceMock {
     var eventHost: String? {
         config.eventsUrl.host
     }
+
+    #if !os(Windows) && !os(Linux)
     var eventRequestStubTest: HTTPStubsTestBlock {
         isScheme(Constants.schemeHttps) && isHost(eventHost!) && isMethodPOST()
     }
@@ -239,6 +254,7 @@ extension DarklyServiceMock {
             activate?(request)
         }
     }
+    #endif
 
     /// Use when testing requires the mock service to provide a service response to the event request callback
     func stubEventResponse(success: Bool, responseOnly: Bool = false, errorOnly: Bool = false, responseDate: Date? = nil) {
@@ -265,6 +281,7 @@ extension DarklyServiceMock {
 
     // MARK: Publish Diagnostic
 
+    #if !os(Linux) && !os(Windows)
     /// Use when testing requires the mock service to actually make an diagnostic request
     func stubDiagnosticRequest(success: Bool, onActivation activate: ((URLRequest, HTTPStubsDescriptor, HTTPStubsResponse) -> Void)? = nil) {
         let stubResponse: HTTPStubsResponseBlock = success ? { _ in
@@ -297,8 +314,10 @@ extension DarklyServiceMock {
             return
         }
     }
+    #endif
 }
 
+#if !os(Linux) && !os(Windows)
 /**
  * Matcher testing that the `NSURLRequest` is using the **REPORT** `HTTPMethod`
  *
@@ -306,6 +325,7 @@ extension DarklyServiceMock {
  *            is using the REPORT method
  */
 public func isMethodREPORT() -> HTTPStubsTestBlock { { $0.httpMethod == URLRequest.HTTPMethods.report } }
+#endif
 
 extension HTTPURLResponse {
     static func dateHeader(from date: Date?) -> [String: String]? {

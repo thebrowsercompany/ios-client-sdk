@@ -1,3 +1,4 @@
+#if !os(Linux) && !os(Windows)
 import Foundation
 import Quick
 import Nimble
@@ -48,7 +49,17 @@ final class DarklyServiceSpec: QuickSpec {
         }
     }
 
+    #if SWIFT_PACKAGE
+    override class func spec() {
+        specContents()
+    }
+    #else
     override func spec() {
+        Self.specContents()
+    }
+    #endif
+
+    private class func specContents() {
         getFeatureFlagsSpec()
         flagRequestEtagSpec()
         clearFlagRequestCacheSpec()
@@ -62,7 +73,7 @@ final class DarklyServiceSpec: QuickSpec {
         }
     }
 
-    private func getFeatureFlagsSpec() {
+    private class func getFeatureFlagsSpec() {
         var testContext: TestContext!
         var requestEtag: String!
 
@@ -410,7 +421,7 @@ final class DarklyServiceSpec: QuickSpec {
         }
     }
 
-    private func flagRequestEtagSpec() {
+    private class func flagRequestEtagSpec() {
         var originalFlagRequestEtag: String!
         var testContext: TestContext!
         describe("flagRequestEtag") {
@@ -512,7 +523,7 @@ final class DarklyServiceSpec: QuickSpec {
         }
     }
 
-    private func clearFlagRequestCacheSpec() {
+    private class func clearFlagRequestCacheSpec() {
         describe("clearFlagResponseCache") {
             it("clears cached etag") {
                 let testContext = TestContext()
@@ -523,7 +534,7 @@ final class DarklyServiceSpec: QuickSpec {
         }
     }
 
-    private func createEventSourceSpec() {
+    private class func createEventSourceSpec() {
         var testContext: TestContext!
 
         describe("createEventSource") {
@@ -543,7 +554,7 @@ final class DarklyServiceSpec: QuickSpec {
                     let expectedContext = encodeToLDValue(testContext.context, userInfo: [LDContext.UserInfoKeys.includePrivateAttributes: true, LDContext.UserInfoKeys.redactAttributes: false])
                     expect(receivedArguments!.url.lastPathComponent.jsonValue) == expectedContext
                     expect(receivedArguments!.httpHeaders).toNot(beEmpty())
-                    expect(receivedArguments!.connectMethod).to(be("GET"))
+                    expect(receivedArguments!.connectMethod) == "GET"
                     expect(receivedArguments!.connectBody).to(beNil())
                 }
             }
@@ -568,7 +579,7 @@ final class DarklyServiceSpec: QuickSpec {
         }
     }
 
-    private func publishEventDataSpec() {
+    private class func publishEventDataSpec() {
         let testData = Data("abc".utf8)
         var testContext: TestContext!
 
@@ -638,7 +649,7 @@ final class DarklyServiceSpec: QuickSpec {
         }
     }
 
-    private func diagnosticCacheSpec() {
+    private class func diagnosticCacheSpec() {
         describe("diagnosticCache") {
             it("does not create cache with empty mobile key") {
                 let testContext = TestContext(mobileKey: "")
@@ -659,11 +670,11 @@ final class DarklyServiceSpec: QuickSpec {
         }
     }
 
-    private func stubDiagnostic() -> DiagnosticStats {
+    private class func stubDiagnostic() -> DiagnosticStats {
         DiagnosticStats(id: DiagnosticId(diagnosticId: "test-id", sdkKey: LDConfig.Constants.mockMobileKey), creationDate: 1000, dataSinceDate: 100, droppedEvents: 0, eventsInLastBatch: 0, streamInits: [])
     }
 
-    private func publishDiagnosticSpec() {
+    private class func publishDiagnosticSpec() {
         var testContext: TestContext!
 
         describe("publishDiagnostic") {
@@ -755,3 +766,4 @@ private extension String {
         return try? JSONDecoder().decode(LDValue.self, from: data)
     }
 }
+#endif // !os(Linux) && !os(Windows)

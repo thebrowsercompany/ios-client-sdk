@@ -5,7 +5,17 @@ import Nimble
 
 final class DiagnosticEventSpec: QuickSpec {
 
+    #if SWIFT_PACKAGE
+    override class func spec() {
+        specContents()
+    }
+    #else
     override func spec() {
+        Self.specContents()
+    }
+    #endif
+
+    private class func specContents() {
         diagnosticIdSpec()
         diagnosticSdkSpec()
         diagnosticPlatformSpec()
@@ -16,7 +26,7 @@ final class DiagnosticEventSpec: QuickSpec {
         diagnosticStatsSpec()
     }
 
-    private func diagnosticIdSpec() {
+    private class func diagnosticIdSpec() {
         context("DiagnosticId init") {
             context("with empty mobile key") {
                 it("inits with correct values") {
@@ -62,7 +72,7 @@ final class DiagnosticEventSpec: QuickSpec {
         }
     }
 
-    private func diagnosticSdkSpec() {
+    private class func diagnosticSdkSpec() {
         context("DiagnosticSdk") {
             context("without wrapper configured") {
                 it("has correct values and encoding") {
@@ -101,7 +111,7 @@ final class DiagnosticEventSpec: QuickSpec {
         }
     }
 
-    private func diagnosticPlatformSpec() {
+    private class func diagnosticPlatformSpec() {
         var environmentReporter: EnvironmentReportingMock!
         var diagnosticPlatform: DiagnosticPlatform!
         context("DiagnosticPlatform") {
@@ -139,7 +149,7 @@ final class DiagnosticEventSpec: QuickSpec {
         }
     }
 
-    private func diagnosticStreamInitSpec() {
+    private class func diagnosticStreamInitSpec() {
         context("DiagnosticStreamInit") {
             it("inits with given values") {
                 let streamInit = DiagnosticStreamInit(timestamp: 1000, durationMillis: 100, failed: true)
@@ -169,7 +179,7 @@ final class DiagnosticEventSpec: QuickSpec {
         }
     }
 
-    private func customizedConfig() -> LDConfig {
+    private class func customizedConfig() -> LDConfig {
         var customConfig = LDConfig(mobileKey: "foobar", autoEnvAttributes: .disabled, isDebugBuild: true)
         customConfig.baseUrl = URL(string: "https://clientstream.launchdarkly.com")!
         customConfig.eventsUrl = URL(string: "https://app.launchdarkly.com")!
@@ -192,7 +202,7 @@ final class DiagnosticEventSpec: QuickSpec {
         return customConfig
     }
 
-    private func diagnosticConfigSpec() {
+    private class func diagnosticConfigSpec() {
         let defaultConfig = LDConfig(mobileKey: "foobar", autoEnvAttributes: .disabled, isDebugBuild: true)
         let customConfig = customizedConfig()
         context("DiagnosticConfig") {
@@ -311,7 +321,7 @@ final class DiagnosticEventSpec: QuickSpec {
         }
     }
 
-    private func diagnosticKindSpec() {
+    private class func diagnosticKindSpec() {
         context("DiagnosticKind") {
             // JSONEncoder will encode raw primitives on newer platforms, but not all supported platforms. For these
             // tests we wrap the kind in an object to allow us to test the encoding.
@@ -334,7 +344,7 @@ final class DiagnosticEventSpec: QuickSpec {
         }
     }
 
-    private func diagnosticInitSpec() {
+    private class func diagnosticInitSpec() {
         let customConfig = customizedConfig()
         var now: Int64!
         var diagnosticId: DiagnosticId!
@@ -376,7 +386,7 @@ final class DiagnosticEventSpec: QuickSpec {
         }
     }
 
-    private func diagnosticStatsSpec() {
+    private class func diagnosticStatsSpec() {
         var now: Int64!
         var diagnosticId: DiagnosticId!
         var diagnosticStats: DiagnosticStats!
@@ -426,10 +436,10 @@ final class DiagnosticEventSpec: QuickSpec {
         }
     }
 
-    private let encoder = JSONEncoder()
-    private let decoder = JSONDecoder()
+    private static let encoder = JSONEncoder()
+    private static let decoder = JSONDecoder()
 
-    private func loadAndRestore<T: Codable>(_ subject: T?) -> T? {
+    private class func loadAndRestore<T: Codable>(_ subject: T?) -> T? {
         let encoded = try? encoder.encode(subject)
         return try? decoder.decode(T.self, from: encoded!)
     }

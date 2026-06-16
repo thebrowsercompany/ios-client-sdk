@@ -10,22 +10,32 @@ final class ThrottlerSpec: QuickSpec {
         static let maxDelay: TimeInterval = 10.0
     }
 
-    let dispatchQueue = DispatchQueue(label: "ThrottlerSpecQueue")
+    static let dispatchQueue = DispatchQueue(label: "ThrottlerSpecQueue")
 
-    func testThrottler(throttlingDisabled: Bool = false) -> Throttler {
+    class func testThrottler(throttlingDisabled: Bool = false) -> Throttler {
         return Throttler(logger: OSLog(subsystem: "com.launchdarkly", category: "tests"),
                          maxDelay: Constants.maxDelay,
                          isDebugBuild: throttlingDisabled,
                          dispatcher: { self.dispatchQueue.sync(execute: $0) })
     }
 
+    #if SWIFT_PACKAGE
+    override class func spec() {
+        specContents()
+    }
+    #else
     override func spec() {
+        Self.specContents()
+    }
+    #endif
+
+    private class func specContents() {
         initSpec()
         runSpec()
         cancelSpec()
     }
 
-    func initSpec() {
+    class func initSpec() {
         describe("init") {
             it("with a maxDelay parameter") {
                 let throttler = Throttler(logger: OSLog(subsystem: "com.launchdarkly", category: "tests"), maxDelay: Constants.maxDelay)
@@ -46,7 +56,7 @@ final class ThrottlerSpec: QuickSpec {
         }
     }
 
-    func runSpec() {
+    class func runSpec() {
         describe("runThrottled") {
             context("throttling enabled") {
                 firstRunsSpec()
@@ -60,7 +70,7 @@ final class ThrottlerSpec: QuickSpec {
         }
     }
 
-    func firstRunsSpec() {
+    class func firstRunsSpec() {
         it("first runs immediate") {
             var hasRun = false
             let throttler = self.testThrottler()
@@ -80,7 +90,7 @@ final class ThrottlerSpec: QuickSpec {
         }
     }
 
-    func immediateAfterDelaySpec() {
+    class func immediateAfterDelaySpec() {
         it("delay resets throttling") {
             let throttler = self.testThrottler()
             // First two run immediate
@@ -99,7 +109,7 @@ final class ThrottlerSpec: QuickSpec {
         }
     }
 
-    func throttledRunSpec() {
+    class func throttledRunSpec() {
         it("sequential calls are throttled") {
             let throttler = self.testThrottler()
             // First two run immediate
@@ -119,7 +129,7 @@ final class ThrottlerSpec: QuickSpec {
         }
     }
 
-    func maxDelaySpec() {
+    class func maxDelaySpec() {
         it("limits delay to maxDelay") {
             let throttler = Throttler(logger: OSLog(subsystem: "com.launchdarkly", category: "tests"), maxDelay: 1.0, isDebugBuild: false)
             (0..<10).forEach { _ in throttler.runThrottled { } }
@@ -138,7 +148,7 @@ final class ThrottlerSpec: QuickSpec {
         }
     }
 
-    func throttlingDisabledRunSpec() {
+    class func throttlingDisabledRunSpec() {
         it("never throttles") {
             let throttler = self.testThrottler(throttlingDisabled: true)
             for _ in 0..<5 {
@@ -152,7 +162,7 @@ final class ThrottlerSpec: QuickSpec {
         }
     }
 
-    func cancelSpec() {
+    class func cancelSpec() {
         it("can be cancelled") {
             let throttler = self.testThrottler()
             // Two immediate runs

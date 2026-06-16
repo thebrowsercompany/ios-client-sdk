@@ -18,9 +18,13 @@ final class FeatureFlagCacheSpec: XCTestCase {
         let flagCache = FeatureFlagCache(serviceFactory: serviceFactory, mobileKey: "abc", maxCachedContexts: 2)
         XCTAssertEqual(flagCache.maxCachedContexts, 2)
         XCTAssertEqual(serviceFactory.makeKeyedValueCacheCallCount, 1)
-        let bundleHashed = Util.sha256base64(Bundle.main.bundleIdentifier!)
         let keyHashed = Util.sha256base64("abc")
+        #if !os(Linux) && !os(Windows)
+        let bundleHashed = Util.sha256base64(Bundle.main.bundleIdentifier!)
         let expectedCacheKey = "com.launchdarkly.client.\(bundleHashed).\(keyHashed)"
+        #else
+        let expectedCacheKey = "com.launchdarkly.client.\(keyHashed)"
+        #endif
         XCTAssertEqual(serviceFactory.makeKeyedValueCacheReceivedCacheKey, expectedCacheKey)
         XCTAssertTrue(flagCache.keyedValueCache as? KeyedValueCachingMock === mockValueCache)
     }

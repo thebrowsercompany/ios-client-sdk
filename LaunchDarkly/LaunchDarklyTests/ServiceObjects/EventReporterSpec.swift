@@ -3,6 +3,10 @@ import Quick
 import Nimble
 @testable import LaunchDarkly
 
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
 final class EventReporterSpec: QuickSpec {
     struct Constants {
         static let eventFlushInterval: TimeInterval = 10.0
@@ -62,7 +66,17 @@ final class EventReporterSpec: QuickSpec {
         }
     }
 
+    #if SWIFT_PACKAGE
+    override class func spec() {
+        specContents()
+    }
+    #else
     override func spec() {
+        Self.specContents()
+    }
+    #endif
+
+    private class func specContents() {
         initSpec()
         isOnlineSpec()
         recordEventSpec()
@@ -71,7 +85,7 @@ final class EventReporterSpec: QuickSpec {
         reportTimerSpec()
     }
 
-    private func initSpec() {
+    private class func initSpec() {
         describe("init") {
             var testContext: TestContext!
             beforeEach {
@@ -87,7 +101,7 @@ final class EventReporterSpec: QuickSpec {
         }
     }
 
-    private func isOnlineSpec() {
+    private class func isOnlineSpec() {
         describe("isOnline") {
             var testContext: TestContext!
             beforeEach {
@@ -163,7 +177,7 @@ final class EventReporterSpec: QuickSpec {
         }
     }
 
-    private func recordEventSpec() {
+    private class func recordEventSpec() {
         describe("recordEvent") {
             var testContext: TestContext!
             context("event store empty") {
@@ -202,7 +216,7 @@ final class EventReporterSpec: QuickSpec {
         }
     }
 
-    private func reportEventsSpec() {
+    private class func reportEventsSpec() {
         describe("reportEvents") {
             var testContext: TestContext!
             var eventStubResponseDate: Date!
@@ -474,7 +488,7 @@ final class EventReporterSpec: QuickSpec {
         }
     }
 
-    func testRecordFlagEvaluationEvents() {
+    class func testRecordFlagEvaluationEvents() {
         let context = LDContext.stub()
         let serviceMock = DarklyServiceMock()
         describe("recordFlagEvaluationEvents") {
@@ -610,7 +624,7 @@ final class EventReporterSpec: QuickSpec {
         }
     }
 
-    private func reportTimerSpec() {
+    private class func reportTimerSpec() {
         describe("report timer fires") {
             var testContext: TestContext!
             afterEach {

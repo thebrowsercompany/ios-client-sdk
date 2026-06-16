@@ -4,7 +4,17 @@ import Nimble
 @testable import LaunchDarkly
 
 final class DiagnosticCacheSpec: QuickSpec {
+    #if SWIFT_PACKAGE
+    override class func spec() {
+        specContents()
+    }
+    #else
     override func spec() {
+        Self.specContents()
+    }
+    #endif
+
+    private class func specContents() {
         context("DiagnosticCache") {
             getCurrentStatsAndResetSpec()
             incrementDroppedEventCountSpec()
@@ -13,7 +23,7 @@ final class DiagnosticCacheSpec: QuickSpec {
         }
     }
 
-    private func getCurrentStatsAndResetSpec() {
+    private class func getCurrentStatsAndResetSpec() {
         context("getCurrentStatsAndReset") {
             it("has expected initial values") {
                 let diagnosticCache = DiagnosticCache(sdkKey: "this_is_a_fake_key")
@@ -55,7 +65,7 @@ final class DiagnosticCacheSpec: QuickSpec {
         }
     }
 
-    private func incrementDroppedEventCountSpec() {
+    private class func incrementDroppedEventCountSpec() {
         context("incrementDroppedEventCount") {
             it("increments dropped event count") {
                 let diagnosticCache = DiagnosticCache(sdkKey: "this_is_a_fake_key")
@@ -94,7 +104,7 @@ final class DiagnosticCacheSpec: QuickSpec {
         }
     }
 
-    private func recordEventsInLastBatchSpec() {
+    private class func recordEventsInLastBatchSpec() {
         context("recordEventsInLastBatch") {
             it("sets events in last batch") {
                 let diagnosticCache = DiagnosticCache(sdkKey: "this_is_a_fake_key")
@@ -116,7 +126,7 @@ final class DiagnosticCacheSpec: QuickSpec {
         }
     }
 
-    private func addStreamInitSpec() {
+    private class func addStreamInitSpec() {
         context("addStreamInit") {
             it("adds a stream init") {
                 let diagnosticCache = DiagnosticCache(sdkKey: "this_is_a_fake_key")
@@ -179,4 +189,5 @@ final class DiagnosticCacheSpec: QuickSpec {
             }
         }
     }
+
 }

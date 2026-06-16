@@ -2,6 +2,15 @@ import Foundation
 import LDSwiftEventSource
 import OSLog
 
+#if os(Linux) || os(Windows)
+import class FoundationNetworking.URLResponse
+import class FoundationNetworking.HTTPURLResponse
+import struct FoundationNetworking.URLRequest
+
+import class FoundationNetworking.URLSessionConfiguration
+import AnyURLSession
+#endif
+
 // swiftlint:disable:next large_tuple
 typealias ServiceResponse = (data: Data?, urlResponse: URLResponse?, error: Error?, etag: String?)
 typealias ServiceCompletionHandler = (ServiceResponse) -> Void
@@ -18,6 +27,7 @@ protocol DarklyServiceProvider: AnyObject {
     var config: LDConfig { get }
     var context: LDContext { get set }
     var diagnosticCache: DiagnosticCaching? { get }
+    var flagRequestEtag: String? { get }
 
     func getFeatureFlags(useReport: Bool, completion: ServiceCompletionHandler?)
     func resetFlagResponseCache(etag: String?)
@@ -55,7 +65,7 @@ final class DarklyService: DarklyServiceProvider {
     private var session: URLSession
     var flagRequestEtag: String?
 
-  init(config: LDConfig, context: LDContext, envReporter: EnvironmentReporting, serviceFactory: ClientServiceCreating) {
+    init(config: LDConfig, context: LDContext, envReporter: EnvironmentReporting, serviceFactory: ClientServiceCreating) {
         self.config = config
         self.context = context
         self.serviceFactory = serviceFactory
@@ -70,11 +80,13 @@ final class DarklyService: DarklyServiceProvider {
         // URLSessionConfiguration is a class, but `.default` creates a new instance. This does not effect other session configuration.
         let sessionConfig = URLSessionConfiguration.default
 
+        #if !os(Linux) && !os(Windows)
         if #available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *) {
             sessionConfig.tlsMinimumSupportedProtocolVersion = .TLSv12
         } else {
             sessionConfig.tlsMinimumSupportedProtocol = .tlsProtocol12
         }
+        #endif
 
         // We always revalidate the cache which we handle manually
         sessionConfig.requestCachePolicy = .reloadIgnoringLocalCacheData
@@ -114,9 +126,15 @@ final class DarklyService: DarklyServiceProvider {
         }
 
         self.session.dataTask(with: request) { [weak self] data, response, error in
-            DispatchQueue.main.async {
-                self?.processEtag(from: (data: data, urlResponse: response, error: error, etag: self?.flagRequestEtag))
-                completion?((data: data, urlResponse: response, error: error, etag: self?.flagRequestEtag))
+            DispatchQueue.main.async { [weak self] in
+                self?.processEtag(from: (data: data,
+                                         urlResponse: response,
+                                         error: error,
+                                         etag: self?.flagRequestEtag))
+                completion?((data: data,
+                             urlResponse: response,
+                             error: error,
+                             etag: self?.flagRequestEtag))
             }
         }.resume()
     }

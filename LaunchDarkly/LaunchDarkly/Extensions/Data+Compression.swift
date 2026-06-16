@@ -26,7 +26,11 @@
 ///
 
 import Foundation
+#if !os(Windows)
 import Compression
+#else
+import WinSDK
+#endif
 
 public extension Data {
     /// Compresses the data using the gzip algorithm.
@@ -43,20 +47,30 @@ internal extension Data {
     /// - parameter withAlgorithm: Compression algorithm to use. See the `CompressionAlgorithm` type
     /// - returns: compressed data
     func compress(withAlgorithm algo: CompressionAlgorithm) -> Data? {
+        #if os(Windows)
+        guard algo == .zlib else { return nil }
+        return windowsDeflate()
+        #else
         return self.withUnsafeBytes { (sourcePtr: UnsafePointer<UInt8>) -> Data? in
             let config = (operation: COMPRESSION_STREAM_ENCODE, algorithm: algo.lowLevelType)
             return perform(config, source: sourcePtr, sourceSize: count)
         }
+        #endif
     }
 
     /// Decompresses the data.
     /// - parameter withAlgorithm: Compression algorithm to use. See the `CompressionAlgorithm` type
     /// - returns: decompressed data
     func decompress(withAlgorithm algo: CompressionAlgorithm) -> Data? {
+        #if os(Windows)
+        guard algo == .zlib else { return nil }
+        return windowsInflate()
+        #else
         return self.withUnsafeBytes { (sourcePtr: UnsafePointer<UInt8>) -> Data? in
             let config = (operation: COMPRESSION_STREAM_DECODE, algorithm: algo.lowLevelType)
             return perform(config, source: sourcePtr, sourceSize: count)
         }
+        #endif
     }
 
     /// Please consider the [libcompression documentation](https://developer.apple.com/reference/compression/1665429-data_compression)
@@ -76,20 +90,28 @@ internal extension Data {
     /// - returns: raw deflated data according to [RFC-1951](https://tools.ietf.org/html/rfc1951).
     /// - note: Fixed at compression level 5 (best trade off between speed and time)
     func deflate() -> Data? {
+        #if os(Windows)
+        return windowsDeflate()
+        #else
         return self.withUnsafeBytes { (sourcePtr: UnsafePointer<UInt8>) -> Data? in
             let config = (operation: COMPRESSION_STREAM_ENCODE, algorithm: COMPRESSION_ZLIB)
             return perform(config, source: sourcePtr, sourceSize: count)
         }
+        #endif
     }
 
     /// Decompresses the data using the zlib deflate algorithm. Self is expected to be a raw deflate
     /// stream according to [RFC-1951](https://tools.ietf.org/html/rfc1951).
     /// - returns: uncompressed data
     func inflate() -> Data? {
+        #if os(Windows)
+        return windowsInflate()
+        #else
         return self.withUnsafeBytes { (sourcePtr: UnsafePointer<UInt8>) -> Data? in
             let config = (operation: COMPRESSION_STREAM_DECODE, algorithm: COMPRESSION_ZLIB)
             return perform(config, source: sourcePtr, sourceSize: count)
         }
+        #endif
     }
 
     /// Compresses the data using the deflate algorithm and makes it comply to the zlib format.
@@ -98,12 +120,17 @@ internal extension Data {
     func zip() -> Data? {
         let header = Data([0x78, 0x5e])
 
+        #if os(Windows)
+        guard var result = windowsDeflate() else { return nil }
+        result.insert(contentsOf: header, at: 0)
+        #else
         let deflated = self.withUnsafeBytes { (sourcePtr: UnsafePointer<UInt8>) -> Data? in
             let config = (operation: COMPRESSION_STREAM_ENCODE, algorithm: COMPRESSION_ZLIB)
             return perform(config, source: sourcePtr, sourceSize: count, preload: header)
         }
 
         guard var result = deflated else { return nil }
+        #endif
 
         var adler = self.adler32().checksum.bigEndian
         result.append(Data(bytes: &adler, count: MemoryLayout<UInt32>.size))
@@ -128,11 +155,16 @@ internal extension Data {
         // check the header checksum
         guard header % 31 == 0 else { return nil }
 
+        #if os(Windows)
+        let deflated = Data(self[2..<(count - 4)])
+        let cresult = deflated.windowsInflate()
+        #else
         let cresult: Data? = withUnsafeBytes { (ptr: UnsafePointer<UInt8>) -> Data? in
             let source = ptr.advanced(by: 2)
             let config = (operation: COMPRESSION_STREAM_DECODE, algorithm: COMPRESSION_ZLIB)
             return perform(config, source: source, sourceSize: count - overhead)
         }
+        #endif
 
         guard let inflated = cresult else { return nil }
 
@@ -149,6 +181,9 @@ internal extension Data {
     /// - returns: deflated data in gzip format [RFC-1952](https://tools.ietf.org/html/rfc1952)
     /// - note: Fixed at compression level 5 (best trade off between speed and time)
     func gzip() -> Data? {
+        #if os(Windows)
+        return windowsGzip()
+        #else
         var header = Data([0x1f, 0x8b, 0x08, 0x00]) // magic, magic, deflate, noflags
 
         var unixtime = UInt32(Date().timeIntervalSince1970).littleEndian
@@ -172,12 +207,16 @@ internal extension Data {
         result.append(Data(bytes: &isize, count: MemoryLayout<UInt32>.size))
 
         return result
+        #endif
     }
 
     /// Decompresses the data using the gzip deflate algorithm. Self is expected to be a gzip deflate
     /// stream according to [RFC-1952](https://tools.ietf.org/html/rfc1952).
     /// - returns: uncompressed data
     func gunzip() -> Data? {
+        #if os(Windows)
+        return windowsGunzip()
+        #else
         // 10 byte header + data + 8 byte footer. See https://tools.ietf.org/html/rfc1952#section-2
         let overhead = 10 + 8
         guard count >= overhead else { return nil }
@@ -237,6 +276,7 @@ internal extension Data {
         guard ftr.isize == UInt32(truncatingIfNeeded: inflated.count)  else { return nil }
         guard ftr.crc32 == inflated.crc32().checksum                   else { return nil }
         return inflated
+        #endif
     }
 
     /// Calculate the Adler32 checksum of the data.
@@ -292,9 +332,13 @@ struct Crc32: CustomStringConvertible {
     /// Load `crc32()` from '/usr/lib/libz.dylib' if libz is installed.
     /// - returns: A function pointer to crc32() of zlib or nil if zlib can't be found
     private static func loadCrc32fromZLib() -> ZLibCrc32FuncPtr? {
+        #if os(Windows)
+        return nil
+        #else
         guard let libz = dlopen("/usr/lib/libz.dylib", RTLD_NOW) else { return nil }
         guard let fptr = dlsym(libz, "crc32") else { return nil }
         return unsafeBitCast(fptr, to: ZLibCrc32FuncPtr.self)
+        #endif
     }
 
     /// Rudimentary fallback implementation of the crc32 checksum. This is only a backup used
@@ -381,9 +425,13 @@ struct Adler32: CustomStringConvertible {
     /// Load `adler32()` from '/usr/lib/libz.dylib' if libz is installed.
     /// - returns: A function pointer to adler32() of zlib or nil if zlib can't be found
     private static func loadAdler32fromZLib() -> ZLibAdler32FuncPtr? {
+        #if os(Windows)
+        return nil
+        #else
         guard let libz = dlopen("/usr/lib/libz.dylib", RTLD_NOW) else { return nil }
         guard let fptr = dlsym(libz, "adler32") else { return nil }
         return unsafeBitCast(fptr, to: ZLibAdler32FuncPtr.self)
+        #endif
     }
 
     /// Rudimentary fallback implementation of the adler32 checksum. This is only a backup used
@@ -412,6 +460,334 @@ fileprivate extension Data {
     }
 }
 
+#if os(Windows)
+private extension Data {
+    func windowsDeflate() -> Data? {
+        windowsMSZIPDeflate(self)
+    }
+
+    func windowsInflate() -> Data? {
+        guard !isEmpty else { return nil }
+        return windowsMSZIPInflate(self)
+    }
+
+    func windowsGzip() -> Data? {
+        var result = WindowsCompression.gzipHeader
+
+        var unixtime = UInt32(Date().timeIntervalSince1970).littleEndian
+        result.append(Data(bytes: &unixtime, count: MemoryLayout<UInt32>.size))
+        result.append(contentsOf: WindowsCompression.gzipTrailerHeader)
+
+        guard let deflated = windowsDeflate() else { return nil }
+        result.append(deflated)
+
+        var crc32 = self.crc32().checksum.littleEndian
+        result.append(Data(bytes: &crc32, count: MemoryLayout<UInt32>.size))
+
+        var isize = UInt32(truncatingIfNeeded: count).littleEndian
+        result.append(Data(bytes: &isize, count: MemoryLayout<UInt32>.size))
+
+        return result
+    }
+
+    func windowsGunzip() -> Data? {
+        gunzipMember()
+    }
+
+    private func gunzipMember() -> Data? {
+        let minimumMemberSize = WindowsCompression.gzipHeaderSize + WindowsCompression.gzipFooterSize
+        guard count >= minimumMemberSize else { return nil }
+        guard self[0] == WindowsCompression.gzipID1,
+              self[1] == WindowsCompression.gzipID2,
+              self[2] == WindowsCompression.gzipCompressionMethodDeflate
+        else { return nil }
+
+        let flags = self[3]
+        var position = WindowsCompression.gzipHeaderSize
+        let footerStart = count - WindowsCompression.gzipFooterSize
+
+        if flags & WindowsCompression.gzipExtraFlag != 0 {
+            guard footerStart - position >= 2 else { return nil }
+            let extraLength = Int(littleEndianUInt16(at: position))
+            position += 2
+            guard extraLength <= footerStart - position else { return nil }
+            position += extraLength
+        }
+
+        if flags & WindowsCompression.gzipNameFlag != 0 {
+            guard let nextPosition = indexAfterNullTerminatedField(startingAt: position, limit: footerStart) else {
+                return nil
+            }
+            position = nextPosition
+        }
+
+        if flags & WindowsCompression.gzipCommentFlag != 0 {
+            guard let nextPosition = indexAfterNullTerminatedField(startingAt: position, limit: footerStart) else {
+                return nil
+            }
+            position = nextPosition
+        }
+
+        if flags & WindowsCompression.gzipHeaderCRCFlag != 0 {
+            guard footerStart - position >= 2 else { return nil }
+            position += 2
+        }
+
+        guard position < footerStart else { return nil }
+        let compressedStart = position
+        let compressedEnd = footerStart
+
+        let expectedCrc32 = littleEndianUInt32(at: footerStart)
+        let expectedSize = littleEndianUInt32(at: footerStart + 4)
+        let deflated = Data(self[compressedStart..<compressedEnd])
+        guard let inflated = windowsMSZIPInflate(deflated, expectedSize: Int(expectedSize)) else { return nil }
+        guard UInt32(truncatingIfNeeded: inflated.count) == expectedSize else { return nil }
+        guard inflated.crc32().checksum == expectedCrc32 else { return nil }
+
+        return inflated
+    }
+
+    private func indexAfterNullTerminatedField(startingAt offset: Int, limit: Int) -> Int? {
+        var offset = offset
+        while offset < limit, self[offset] != 0x00 {
+            offset += 1
+        }
+        guard offset < limit else { return nil }
+        return offset + 1
+    }
+
+    private func littleEndianUInt16(at offset: Int) -> UInt16 {
+        UInt16(self[offset]) | UInt16(self[offset + 1]) << 8
+    }
+
+    private func littleEndianUInt32(at offset: Int) -> UInt32 {
+        UInt32(self[offset])
+            | UInt32(self[offset + 1]) << 8
+            | UInt32(self[offset + 2]) << 16
+            | UInt32(self[offset + 3]) << 24
+    }
+}
+
+private enum WindowsCompression {
+    static let maxMSZIPBlockSize = 32 * 1024
+    static let maxStoredBlockSize = Int(UInt16.max)
+    static let mszipHeader = Data([0x43, 0x4b])
+    static let emptyStoredBlock: [UInt8] = [0x01, 0x00, 0x00, 0xff, 0xff]
+
+    static let gzipID1: UInt8 = 0x1f
+    static let gzipID2: UInt8 = 0x8b
+    static let gzipCompressionMethodDeflate: UInt8 = 0x08
+    static let gzipHeader = Data([gzipID1, gzipID2, gzipCompressionMethodDeflate, 0x00])
+    static let gzipTrailerHeader: [UInt8] = [0x00, 0x03]
+    static let gzipHeaderSize = 10
+    static let gzipFooterSize = 8
+
+    static let gzipHeaderCRCFlag: UInt8 = 0b00010
+    static let gzipExtraFlag: UInt8 = 0b00100
+    static let gzipNameFlag: UInt8 = 0b01000
+    static let gzipCommentFlag: UInt8 = 0b10000
+}
+
+// Windows does not provide Apple's Compression module, and SwiftPM does not ship a zlib
+// module we can import here. The Windows Compression API's MSZIP raw mode exposes
+// deflate coding with a two-byte "CK" MSZIP marker. We strip that marker when writing
+// RFC1951 payloads and add it back before asking Windows to decode a payload. MSZIP
+// raw mode is limited to 32 KB blocks when writing; larger inputs use stored RFC1951
+// blocks so the gzip/zlib wrappers stay standards-compliant without bit-level block
+// surgery. The stored-block decoder is also kept as a narrow fallback for payloads that
+// Windows rejects but that are valid uncompressed DEFLATE streams.
+private func windowsMSZIPDeflate(_ input: Data) -> Data? {
+    guard !input.isEmpty else {
+        return Data(WindowsCompression.emptyStoredBlock)
+    }
+
+    guard input.count <= WindowsCompression.maxMSZIPBlockSize else {
+        return windowsStoredDeflate(input)
+    }
+
+    return withWindowsCompressor { compressor in
+        var compressedSize: SIZE_T = 0
+        _ = input.withUnsafeBytes { source in
+            Compress(compressor, source.baseAddress, SIZE_T(input.count), nil, 0, &compressedSize)
+        }
+
+        guard compressedSize >= SIZE_T(WindowsCompression.mszipHeader.count),
+              compressedSize <= SIZE_T(Int.max)
+        else { return nil }
+
+        var output = Data(count: Int(compressedSize))
+        let outputCapacity = output.count
+        let compressed = input.withUnsafeBytes { source in
+            output.withUnsafeMutableBytes { destination in
+                Compress(
+                    compressor,
+                    source.baseAddress,
+                    SIZE_T(input.count),
+                    destination.baseAddress,
+                    SIZE_T(outputCapacity),
+                    &compressedSize)
+            }
+        }
+
+        guard compressed else { return nil }
+        guard compressedSize <= SIZE_T(outputCapacity) else { return nil }
+
+        output.removeSubrange(Int(compressedSize)..<output.count)
+        guard output.starts(with: WindowsCompression.mszipHeader) else { return nil }
+        return Data(output.dropFirst(WindowsCompression.mszipHeader.count))
+    }
+}
+
+private func windowsStoredDeflate(_ input: Data) -> Data {
+    var result = Data()
+    var offset = 0
+
+    while offset < input.count {
+        let remaining = input.count - offset
+        let blockSize = Swift.min(remaining, WindowsCompression.maxStoredBlockSize)
+        let blockEnd = offset + blockSize
+        let isFinalBlock = blockEnd == input.count
+
+        // Stored DEFLATE blocks are byte-aligned: one header byte for BFINAL/BTYPE,
+        // followed by LEN, one's-complement NLEN, then the uncompressed payload.
+        result.append(isFinalBlock ? 0x01 : 0x00)
+        let blockLength = UInt16(blockSize)
+        var length = blockLength.littleEndian
+        var invertedLength = (~blockLength).littleEndian
+        result.append(Data(bytes: &length, count: MemoryLayout<UInt16>.size))
+        result.append(Data(bytes: &invertedLength, count: MemoryLayout<UInt16>.size))
+        result.append(input[offset..<blockEnd])
+
+        offset = blockEnd
+    }
+
+    return result
+}
+
+private func windowsMSZIPInflate(_ input: Data, expectedSize: Int? = nil) -> Data? {
+    if input.elementsEqual(WindowsCompression.emptyStoredBlock) {
+        guard expectedSize == nil || expectedSize == 0 else { return nil }
+        return Data()
+    }
+
+    var mszipInput = WindowsCompression.mszipHeader
+    mszipInput.append(input)
+
+    guard input.count <= Int.max / 2 else { return nil }
+    let initialOutputCapacity = Swift.max(input.count * 2, 64)
+
+    if let expectedSize = expectedSize {
+        guard expectedSize > 0 else { return nil }
+        var outputCapacity = Swift.min(initialOutputCapacity, expectedSize)
+
+        while outputCapacity > 0 {
+            guard let output = windowsMSZIPInflate(mszipInput, outputCapacity: outputCapacity) else {
+                return windowsStoredInflate(input)
+            }
+
+            if output.count < outputCapacity || outputCapacity == expectedSize {
+                guard output.count == expectedSize else { return nil }
+                return output
+            }
+
+            guard outputCapacity <= Int.max / 2 else { return nil }
+            outputCapacity = Swift.min(outputCapacity * 2, expectedSize)
+        }
+
+        return nil
+    }
+
+    var outputCapacity = initialOutputCapacity
+    while outputCapacity > 0 {
+        guard let output = windowsMSZIPInflate(mszipInput, outputCapacity: outputCapacity) else {
+            return windowsStoredInflate(input)
+        }
+
+        if output.count < outputCapacity {
+            return output
+        }
+
+        guard outputCapacity <= Int.max / 2 else { return nil }
+        outputCapacity *= 2
+    }
+
+    return nil
+}
+
+private func windowsStoredInflate(_ input: Data) -> Data? {
+    var result = Data()
+    var offset = 0
+
+    while offset < input.count {
+        let header = input[offset]
+        let isFinalBlock = header & 0x01 != 0
+        let blockType = (header >> 1) & 0x03
+
+        guard blockType == 0 else { return nil }
+        offset += 1
+
+        guard input.count - offset >= 4 else { return nil }
+        let length = UInt16(input[offset]) | UInt16(input[offset + 1]) << 8
+        let invertedLength = UInt16(input[offset + 2]) | UInt16(input[offset + 3]) << 8
+        guard length == ~invertedLength else { return nil }
+        offset += 4
+
+        let blockLength = Int(length)
+        guard blockLength <= input.count - offset else { return nil }
+        result.append(input[offset..<(offset + blockLength)])
+        offset += blockLength
+
+        if isFinalBlock {
+            return offset == input.count ? result : nil
+        }
+    }
+
+    return nil
+}
+
+private func windowsMSZIPInflate(_ input: Data, outputCapacity: Int) -> Data? {
+    withWindowsDecompressor { decompressor in
+        var output = Data(count: outputCapacity)
+        let destinationCapacity = output.count
+        var decompressedSize: SIZE_T = 0
+        let decompressed = input.withUnsafeBytes { source in
+            output.withUnsafeMutableBytes { destination in
+                Decompress(
+                    decompressor,
+                    source.baseAddress,
+                    SIZE_T(input.count),
+                    destination.baseAddress,
+                    SIZE_T(destinationCapacity),
+                    &decompressedSize)
+            }
+        }
+
+        guard decompressed else { return nil }
+        guard decompressedSize <= SIZE_T(destinationCapacity) else { return nil }
+
+        output.removeSubrange(Int(decompressedSize)..<output.count)
+        return output
+    }
+}
+
+private func withWindowsCompressor<Result>(_ body: (COMPRESSOR_HANDLE?) -> Result?) -> Result? {
+    var compressor: COMPRESSOR_HANDLE?
+    let algorithm = DWORD(COMPRESS_ALGORITHM_MSZIP | COMPRESS_RAW)
+    guard CreateCompressor(algorithm, nil, &compressor) else { return nil }
+    defer { CloseCompressor(compressor) }
+
+    return body(compressor)
+}
+
+private func withWindowsDecompressor<Result>(_ body: (DECOMPRESSOR_HANDLE?) -> Result?) -> Result? {
+    var decompressor: DECOMPRESSOR_HANDLE?
+    let algorithm = DWORD(COMPRESS_ALGORITHM_MSZIP | COMPRESS_RAW)
+    guard CreateDecompressor(algorithm, nil, &decompressor) else { return nil }
+    defer { CloseDecompressor(decompressor) }
+
+    return body(decompressor)
+}
+#else
 fileprivate extension Data.CompressionAlgorithm {
     var lowLevelType: compression_algorithm {
         switch self {
@@ -478,3 +854,4 @@ private func perform(_ config: Config, source: UnsafePointer<UInt8>, sourceSize:
         }
     }
 }
+#endif

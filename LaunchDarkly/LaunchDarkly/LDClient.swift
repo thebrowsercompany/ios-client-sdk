@@ -261,14 +261,14 @@ public class LDClient {
         os_log("%s stopped", log: config.logger, type: .debug, typeName(and: #function))
     }
 
-    @objc private func didEnterBackground() {
+    private func didEnterBackground() {
         os_log("%s", log: config.logger, type: .debug, typeName(and: #function))
         Thread.performOnMain {
             runMode = .background
         }
     }
 
-    @objc private func willEnterForeground() {
+    private func willEnterForeground() {
         os_log("%s", log: config.logger, type: .debug, typeName(and: #function))
         Thread.performOnMain {
             runMode = .foreground
@@ -674,7 +674,11 @@ public class LDClient {
 
     private func updateCacheAndReportChanges(context: LDContext,
                                              oldStoredItems: StoredItems, etag: String?) {
-        flagCache.saveCachedData(flagStore.storedItems, cacheKey: context.fullyQualifiedHashedKey(), contextHash: context.contextHash(), lastUpdated: Date(), etag: etag)
+        flagCache.saveCachedData(flagStore.storedItems,
+                                 cacheKey: context.fullyQualifiedHashedKey(),
+                                 contextHash: context.contextHash(),
+                                 lastUpdated: Date(),
+                                 etag: etag ?? service.flagRequestEtag)
         flagChangeNotifier.notifyObservers(oldFlags: oldStoredItems.featureFlags, newFlags: flagStore.storedItems.featureFlags)
     }
 
@@ -686,7 +690,11 @@ public class LDClient {
      In other words, if we get confirmation our cache is still fresh, then we shouldn't poll again for another <pollingInterval> seconds. If we didn't update this, we would poll immediately on restart.
     */
     private func updateCacheFreshness(context: LDContext) {
-        flagCache.saveCachedData(flagStore.storedItems, cacheKey: context.fullyQualifiedHashedKey(), contextHash: context.contextHash(), lastUpdated: Date(), etag: nil)
+        flagCache.saveCachedData(flagStore.storedItems,
+                                 cacheKey: context.fullyQualifiedHashedKey(),
+                                 contextHash: context.contextHash(),
+                                 lastUpdated: Date(),
+                                 etag: service.flagRequestEtag)
     }
 
     // MARK: Events
@@ -764,7 +772,7 @@ public class LDClient {
         }
     }
 
-    @objc private func didCloseEventSource() {
+    private func didCloseEventSource() {
         os_log("%s", log: config.logger, type: .debug, typeName(and: #function))
         self.connectionInformation = ConnectionInformation.lastSuccessfulConnectionCheck(connectionInformation: self.connectionInformation)
     }
@@ -853,11 +861,7 @@ public class LDClient {
 
             // now register the client with all the plugins
             for plugin in config.plugins {
-                do {
-                    plugin.register(client: instance, metadata: environmentMetadata)
-                } catch {
-                    os_log("Exception thrown registering plugin %@.", log: config.logger, type: .error, plugin.getMetadata().getName())
-                }
+                plugin.register(client: instance, metadata: environmentMetadata)
             }
         }
 
@@ -949,26 +953,12 @@ public class LDClient {
     private var initializedQueue = DispatchQueue(label: "com.launchdarkly.LDClient.initializedQueue")
     private var identifyQueue = SheddingQueue()
 
+    private var notificationTokens = [NSObjectProtocol]()
+
     private init(serviceFactory: ClientServiceCreating, configuration: LDConfig, startContext: LDContext?, completion: (() -> Void)? = nil) {
         self.serviceFactory = serviceFactory
-        self.hooks = Array(configuration.hooks)
         environmentReporter = self.serviceFactory.makeEnvironmentReporter(config: configuration)
-
-        // Collect plugin hooks before calling beforeIdentify, so plugin hooks participate in the init identify lifecycle.
-        let initSdkMetadata = SdkMetadata(name: SystemCapabilities.systemName, version: ReportingConsts.sdkVersion)
-        let initEnvironmentMetadata = EnvironmentMetadata(
-            applicationInfo: environmentReporter.applicationInfo,
-            sdkMetadata: initSdkMetadata,
-            credential: configuration.mobileKey
-        )
-        for plugin in configuration.plugins {
-            do {
-                let pluginHooks = try plugin.getHooks(metadata: initEnvironmentMetadata)
-                self.hooks.append(contentsOf: pluginHooks)
-            } catch {
-                os_log("Exception thrown getting hooks for plugin %@. Unable to get hooks, plugin will not be registered.", log: configuration.logger, type: .error, plugin.getMetadata().getName())
-            }
-        }
+        self.hooks = LDClient.collectHooks(configuration: configuration, environmentReporter: environmentReporter)
 
         flagCache = self.serviceFactory.makeFeatureFlagCache(mobileKey: configuration.mobileKey, maxCachedContexts: configuration.maxCachedContexts)
         flagStore = self.serviceFactory.makeFlagStore()
@@ -1002,14 +992,7 @@ public class LDClient {
                                                                     lastUpdated: cachedData.lastUpdated,
                                                                     service: service)
 
-        if let backgroundNotification = SystemCapabilities.backgroundNotification {
-            NotificationCenter.default.addObserver(self, selector: #selector(didEnterBackground), name: backgroundNotification, object: nil)
-        }
-        if let foregroundNotification = SystemCapabilities.foregroundNotification {
-            NotificationCenter.default.addObserver(self, selector: #selector(willEnterForeground), name: foregroundNotification, object: nil)
-        }
-
-        NotificationCenter.default.addObserver(self, selector: #selector(didCloseEventSource), name: Notification.Name(FlagSynchronizer.Constants.didCloseEventSourceName), object: nil)
+        addLifecycleObservers()
 
         eventReporter = self.serviceFactory.makeEventReporter(config: configuration, service: service, onSyncComplete: onEventSyncComplete)
         service.resetFlagResponseCache(etag: cachedData.etag)
@@ -1034,6 +1017,43 @@ public class LDClient {
                 self.executeAfterIdentifyHooks(state: state, result: .complete)
             }
         }
+    }
+
+    private static func collectHooks(configuration: LDConfig, environmentReporter: EnvironmentReporting) -> [Hook] {
+        var hooks = Array(configuration.hooks)
+        let sdkMetadata = SdkMetadata(name: SystemCapabilities.systemName, version: ReportingConsts.sdkVersion)
+        let environmentMetadata = EnvironmentMetadata(
+            applicationInfo: environmentReporter.applicationInfo,
+            sdkMetadata: sdkMetadata,
+            credential: configuration.mobileKey
+        )
+
+        // Collect plugin hooks before calling beforeIdentify, so plugin hooks participate in the init identify lifecycle.
+        for plugin in configuration.plugins {
+            hooks.append(contentsOf: plugin.getHooks(metadata: environmentMetadata))
+        }
+
+        return hooks
+    }
+
+    private func addLifecycleObservers() {
+        if let backgroundNotification = SystemCapabilities.backgroundNotification {
+            let background = NotificationCenter.default.addObserver(forName: backgroundNotification, object: nil, queue: OperationQueue.current, using: { [weak self] _ in
+                self?.didEnterBackground()
+            })
+            notificationTokens.append(background)
+        }
+        if let foregroundNotification = SystemCapabilities.foregroundNotification {
+            let foreground = NotificationCenter.default.addObserver(forName: foregroundNotification, object: nil, queue: OperationQueue.current, using: { [weak self] _ in
+                self?.willEnterForeground()
+            })
+            notificationTokens.append(foreground)
+        }
+
+        let didClose = NotificationCenter.default.addObserver(forName: Notification.Name(FlagSynchronizer.Constants.didCloseEventSourceName), object: nil, queue: OperationQueue.current, using: { [weak self] _ in
+            self?.didCloseEventSource()
+        })
+        notificationTokens.append(didClose)
     }
 }
 

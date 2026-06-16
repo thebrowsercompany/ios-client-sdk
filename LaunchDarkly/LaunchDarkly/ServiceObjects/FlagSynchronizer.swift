@@ -3,6 +3,10 @@ import Dispatch
 import LDSwiftEventSource
 import OSLog
 
+#if os(Linux) || os(Windows)
+import FoundationNetworking
+#endif
+
 // sourcery: autoMockable
 protocol LDFlagSynchronizing {
     // sourcery: defaultMockValue = false
@@ -163,7 +167,9 @@ class FlagSynchronizer: LDFlagSynchronizing, EventHandler {
             // signal completion immediately
             syncQueue.async { [self] in reportSyncComplete(.upToDate) }
         }
-        flagRequestTimer = LDTimer(withTimeInterval: pollingInterval, fireQueue: syncQueue, fireAt: fireAt, execute: processTimer)
+        flagRequestTimer = LDTimer(withTimeInterval: pollingInterval, fireQueue: syncQueue, fireAt: fireAt, execute: { [weak self] in
+            self?.processTimer()
+        })
         os_log("%s", log: service.config.logger, type: .debug, typeName(and: #function))
     }
 
@@ -179,7 +185,7 @@ class FlagSynchronizer: LDFlagSynchronizing, EventHandler {
         flagRequestTimer = nil
     }
 
-    @objc private func processTimer() {
+    private func processTimer() {
         makeFlagRequest(isOnline: isOnline)
     }
 
