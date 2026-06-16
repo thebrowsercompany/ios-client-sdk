@@ -27,6 +27,7 @@ protocol DarklyServiceProvider: AnyObject {
     var config: LDConfig { get }
     var context: LDContext { get set }
     var diagnosticCache: DiagnosticCaching? { get }
+    var flagRequestEtag: String? { get }
 
     func getFeatureFlags(useReport: Bool, completion: ServiceCompletionHandler?)
     func resetFlagResponseCache(etag: String?)
@@ -64,7 +65,7 @@ final class DarklyService: DarklyServiceProvider {
     private var session: URLSession
     var flagRequestEtag: String?
 
-  init(config: LDConfig, context: LDContext, envReporter: EnvironmentReporting, serviceFactory: ClientServiceCreating) {
+    init(config: LDConfig, context: LDContext, envReporter: EnvironmentReporting, serviceFactory: ClientServiceCreating) {
         self.config = config
         self.context = context
         self.serviceFactory = serviceFactory
@@ -126,9 +127,14 @@ final class DarklyService: DarklyServiceProvider {
 
         self.session.dataTask(with: request) { [weak self] data, response, error in
             DispatchQueue.main.async { [weak self] in
-                let etag = self?.flagRequestEtag
-                self?.processEtag(from: (data: data, urlResponse: response, error: error, etag: etag))
-                completion?((data: data, urlResponse: response, error: error, etag: etag))
+                self?.processEtag(from: (data: data,
+                                         urlResponse: response,
+                                         error: error,
+                                         etag: self?.flagRequestEtag))
+                completion?((data: data,
+                             urlResponse: response,
+                             error: error,
+                             etag: self?.flagRequestEtag))
             }
         }.resume()
     }

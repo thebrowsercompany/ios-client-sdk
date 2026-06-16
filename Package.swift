@@ -32,35 +32,62 @@ let package = Package(
         .package(url: "https://github.com/mattgallagher/CwlPreconditionTesting", .exact("2.1.2")),
         .package(name: "LDSwiftEventSource", url: "https://github.com/thebrowsercompany/swift-eventsource.git", .branchItem("main-bcny")),
     ],
-    targets: [
+    targets: packageTargets(),
+    swiftLanguageVersions: [.v5])
+
+func packageTargets() -> [Target] {
+    var targets: [Target] = [
         .target(
             name: "LaunchDarkly",
-            dependencies: [
-                .product(name: "LDSwiftEventSource", package: "LDSwiftEventSource"),
-                .target(name: "OSLog", condition: .when(platforms: [.windows])),
-            ],
+            dependencies: launchDarklyDependencies(),
             path: "LaunchDarkly/LaunchDarkly",
             exclude: osSpecificExcludes(),
             resources: [
                 .process("PrivacyInfo.xcprivacy")
+            ],
+            linkerSettings: [
+                .linkedLibrary("Cabinet", .when(platforms: [.windows]))
             ]),
-        .target(
-            name: "OSLog",
-            path: "LaunchDarkly/OSLog"),
         .testTarget(
             name: "LaunchDarklyTests",
             dependencies: osSpecificLDTestsDependencies(),
             path: "LaunchDarkly",
             exclude: ["LaunchDarklyTests/Info.plist", "LaunchDarklyTests/.swiftlint.yml"],
             sources: ["GeneratedCode", "LaunchDarklyTests"]),
-    ],
-    swiftLanguageVersions: [.v5])
+    ]
+
+    #if os(Windows)
+    targets.append(.target(
+        name: "OSLog",
+        path: "LaunchDarkly/OSLog"))
+    #endif
+
+    return targets
+}
+
+func launchDarklyDependencies() -> [Target.Dependency] {
+    var dependencies: [Target.Dependency] = [
+        .product(name: "LDSwiftEventSource", package: "LDSwiftEventSource")
+    ]
+
+    #if os(Windows)
+    dependencies.append(.target(name: "OSLog"))
+    #endif
+
+    return dependencies
+}
 
 func osSpecificLDTestsDependencies() -> [Target.Dependency] {
-    #if os(Linux) || os(Windows)
+    #if os(Windows)
     [
         "LaunchDarkly",
-        .target(name: "OSLog", condition: .when(platforms: [.windows])),
+        .target(name: "OSLog"),
+        .product(name: "Quick", package: "Quick"),
+        .product(name: "Nimble", package: "Nimble")
+    ]
+    #elseif os(Linux)
+    [
+        "LaunchDarkly",
         .product(name: "Quick", package: "Quick"),
         .product(name: "Nimble", package: "Nimble")
     ]

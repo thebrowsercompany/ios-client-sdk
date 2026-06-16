@@ -17,7 +17,17 @@ final class LDClientSpec: QuickSpec {
         fileprivate static let updateThreshold: TimeInterval = 0.05
     }
 
+    #if SWIFT_PACKAGE
     override class func spec() {
+        specContents()
+    }
+    #else
+    override func spec() {
+        Self.specContents()
+    }
+    #endif
+
+    private class func specContents() {
         startSpec()
         moveToBackgroundSpec()
         identifySpec()

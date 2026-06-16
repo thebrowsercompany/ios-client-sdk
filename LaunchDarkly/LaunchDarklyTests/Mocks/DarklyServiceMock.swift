@@ -102,6 +102,7 @@ final class DarklyServiceMock: DarklyServiceProvider {
     var config: LDConfig
     var context: LDContext
     var diagnosticCache: DiagnosticCaching? = nil
+    var flagRequestEtag: String?
 
     #if !os(Linux) && !os(Windows)
     var activationBlocks = [(testBlock: HTTPStubsTestBlock, callback: ((URLRequest, HTTPStubsDescriptor, HTTPStubsResponse) -> Void))]()
@@ -124,6 +125,7 @@ final class DarklyServiceMock: DarklyServiceProvider {
     var clearFlagResponseCacheCallCount = 0
     func resetFlagResponseCache(etag: String?) {
         clearFlagResponseCacheCallCount += 1
+        flagRequestEtag = etag
     }
 
     var createdEventSource: DarklyStreamingProviderMock?

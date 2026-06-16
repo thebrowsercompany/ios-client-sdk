@@ -4,7 +4,17 @@ import Nimble
 @testable import LaunchDarkly
 
 final class DiagnosticCacheSpec: QuickSpec {
+    #if SWIFT_PACKAGE
     override class func spec() {
+        specContents()
+    }
+    #else
+    override func spec() {
+        Self.specContents()
+    }
+    #endif
+
+    private class func specContents() {
         context("DiagnosticCache") {
             getCurrentStatsAndResetSpec()
             incrementDroppedEventCountSpec()

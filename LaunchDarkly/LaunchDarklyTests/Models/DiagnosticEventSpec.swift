@@ -5,7 +5,17 @@ import Nimble
 
 final class DiagnosticEventSpec: QuickSpec {
 
+    #if SWIFT_PACKAGE
     override class func spec() {
+        specContents()
+    }
+    #else
+    override func spec() {
+        Self.specContents()
+    }
+    #endif
+
+    private class func specContents() {
         diagnosticIdSpec()
         diagnosticSdkSpec()
         diagnosticPlatformSpec()

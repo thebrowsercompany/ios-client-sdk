@@ -73,6 +73,14 @@ class CompressionTest: XCTestCase {
         XCTAssertEqual(CompressionTest.blob16mb, CompressionTest.blob16mb.gzip_gunzip())
     }
 
+    func testSmallCompressibleDataGzipIsSmallerThanInput() {
+        let data = Data(String(repeating: "a", count: 500).utf8)
+        let gzipped = data.gzip()
+
+        XCTAssertNotNil(gzipped)
+        XCTAssertLessThan(gzipped?.count ?? Int.max, data.count)
+    }
+
     func testGzipCrcFail() {
         let b = 1024 * 16
         let ints = [UInt32](repeating: 0xcafeabee, count: b / 4)

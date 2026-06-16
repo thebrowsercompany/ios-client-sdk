@@ -134,7 +134,17 @@ final class FlagChangeNotifierSpec: QuickSpec {
         }
     }
 
+    #if SWIFT_PACKAGE
     override class func spec() {
+        specContents()
+    }
+    #else
+    override func spec() {
+        Self.specContents()
+    }
+    #endif
+
+    private class func specContents() {
         describe("init") {
             it("no initial observers") {
                 let notifier = FlagChangeNotifier(logger: OSLog(subsystem: "com.launchdarkly", category: "tests"))

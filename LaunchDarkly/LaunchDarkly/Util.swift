@@ -48,10 +48,10 @@ extension Data {
             if status < 0 { fatalError("Failed to create SHA256 digest using BCrypt APIs (NTSTATUS: \(status))") }
         }
 
-        let BCRYPT_SHA256_ALGORITHM = "SHA256"
+        let bcryptSHA256Algorithm = "SHA256"
 
         var algorithm: WinSDK.BCRYPT_ALG_HANDLE?
-        BCRYPT_SHA256_ALGORITHM.withCString(encodedAs: UTF16.self) {
+        bcryptSHA256Algorithm.withCString(encodedAs: UTF16.self) {
             handleError(WinSDK.BCryptOpenAlgorithmProvider(&algorithm, $0, nil, 0))
         }
         defer { handleError(WinSDK.BCryptCloseAlgorithmProvider(algorithm, 0)) }

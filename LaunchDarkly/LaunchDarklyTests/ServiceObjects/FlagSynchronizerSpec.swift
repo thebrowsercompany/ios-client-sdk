@@ -38,7 +38,17 @@ final class FlagSynchronizerSpec: QuickSpec {
         }
     }
 
+    #if SWIFT_PACKAGE
     override class func spec() {
+        specContents()
+    }
+    #else
+    override func spec() {
+        Self.specContents()
+    }
+    #endif
+
+    private class func specContents() {
         initSpec()
         changeIsOnlineSpec()
         streamingEventSpec()
