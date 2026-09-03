@@ -7,7 +7,7 @@ on:
 jobs:
   library-windows:
     name: Windows - Swift 5.9 - SPM
-    runs-on: windows-latest
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@v3
       - name: Install Swift
@@ -20,7 +20,7 @@ jobs:
 
   library-darwin:
     name: macOS - Swift 5.9 - SPM
-    runs-on: macos-13
+    runs-on: macos-14
     steps:
       - uses: actions/checkout@v3
       - name: Select Xcode 15.0.1
