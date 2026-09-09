@@ -29,7 +29,10 @@ let package = Package(
         .package(url: "https://github.com/AliSoftware/OHHTTPStubs.git", .exact("9.1.0")),
         .package(url: "https://github.com/Quick/Quick.git", .exact("7.3.0")),
         .package(url: "https://github.com/Quick/Nimble.git", .exact("13.0.0")),
-        .package(name: "LDSwiftEventSource", url: "https://github.com/thebrowsercompany/swift-eventsource.git", .branchItem("main-bcny")),
+        .package(
+            name: "LDSwiftEventSource",
+            url: "https://github.com/thebrowsercompany/swift-eventsource.git",
+            .revisionItem("1fc81e48ba3ae0a3656888ea582e46b602bba76d")),
     ],
     targets: [
         .target(

@@ -59,7 +59,7 @@
         "package": "LDSwiftEventSource",
         "repositoryURL": "https://github.com/thebrowsercompany/swift-eventsource.git",
         "state": {
-          "branch": "main-bcny",
+          "branch": null,
           "revision": "1fc81e48ba3ae0a3656888ea582e46b602bba76d",
           "version": null
         }
