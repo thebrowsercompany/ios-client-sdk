@@ -10,6 +10,7 @@ final class DiagnosticCacheSpec: QuickSpec {
             incrementDroppedEventCountSpec()
             recordEventsInLastBatchSpec()
             addStreamInitSpec()
+            persistenceDrainSpec()
             lastStatsSpec()
             backingStoreSpec()
         }
@@ -235,6 +236,21 @@ final class DiagnosticCacheSpec: QuickSpec {
                 let restoredCache = DiagnosticCache(sdkKey: "this_is_a_different_fake_key")
                 let lastStats = restoredCache.lastStats
                 expect(lastStats).to(beNil())
+            }
+        }
+    }
+
+    private class func persistenceDrainSpec() {
+        context("waitForPendingWrites") {
+            it("completes queued updates before returning") {
+                self.clearStoredCaches()
+                let diagnosticCache = DiagnosticCache(sdkKey: "this_is_a_fake_key")
+                diagnosticCache.incrementDroppedEventCount()
+                DiagnosticCache.waitForPendingWrites()
+                let stored = UserDefaults.standard.data(forKey: "com.launchdarkly.DiagnosticCache.diagnosticData.this_is_a_fake_key")
+                expect(stored).toNot(beNil())
+                let decoded = try! JSONSerialization.jsonObject(with: stored!) as! [String: Any]
+                expect(decoded["droppedEvents"] as? Int) == 1
             }
         }
     }

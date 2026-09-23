@@ -22,6 +22,12 @@ final class ConnectionInformationStore {
             UserDefaults.standard.save(customObject: connectionInformation, forKey: ConnectionInformationStore.connectionInformationKey)
         }
     }
+
+    /// Blocks until writes queued so far have been persisted, e.g. before the
+    /// owning client shuts down.
+    static func waitForPendingWrites() {
+        storeQueue.sync { }
+    }
 }
 
 private extension UserDefaults {

@@ -241,6 +241,10 @@ public class LDClient {
         Log.debug(typeName(and: #function, appending: "- ") + "stopping")
         internalFlush()
         internalSetOnline(false)
+        // Connection information and diagnostics persist asynchronously;
+        // closing waits for pending writes so they survive shutdown.
+        ConnectionInformationStore.waitForPendingWrites()
+        DiagnosticCache.waitForPendingWrites()
         hasStarted = false
         Log.debug(typeName(and: #function, appending: "- ") + "stopped")
     }

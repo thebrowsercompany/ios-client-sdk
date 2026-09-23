@@ -20,27 +20,33 @@ final class DiagnosticCache: DiagnosticCaching {
 
     private(set) var lastStats: DiagnosticStats?
 
-    private var cacheQueue = DispatchQueue(label: cacheQueueLabel)
+    // Shared across instances: a new cache must observe updates still pending
+    // from a previous instance for the same stored data.
+    private static let cacheQueue = DispatchQueue(label: cacheQueueLabel)
 
     init(sdkKey: String) {
         self.sdkKey = sdkKey
         self.dataKey = "\(DiagnosticCache.diagnosticDataKey).\(sdkKey)"
 
-        if let storedData = StoreData.load(from: dataKey) {
-            let oldId = DiagnosticId(diagnosticId: storedData.instanceId, sdkKey: sdkKey)
-            lastStats = DiagnosticStats(id: oldId, creationDate: Date().millisSince1970, dataSinceDate: storedData.dataSinceDate, droppedEvents: storedData.droppedEvents, eventsInLastBatch: storedData.eventsInLastBatch, streamInits: storedData.streamInits)
-        }
-        // Saving rewrites the app's preferences file and can block on a disk
-        // flush, so it runs on the cache queue rather than the initializing
-        // thread. Later reads and updates go through the same serial queue.
-        let dataKey = self.dataKey
-        cacheQueue.async {
+        // Runs synchronously so the stored data is reset when init returns,
+        // ordered behind any updates a previous instance queued.
+        Self.cacheQueue.sync {
+            if let storedData = StoreData.load(from: dataKey) {
+                let oldId = DiagnosticId(diagnosticId: storedData.instanceId, sdkKey: sdkKey)
+                lastStats = DiagnosticStats(id: oldId, creationDate: Date().millisSince1970, dataSinceDate: storedData.dataSinceDate, droppedEvents: storedData.droppedEvents, eventsInLastBatch: storedData.eventsInLastBatch, streamInits: storedData.streamInits)
+            }
             StoreData.defaultWithRandomId().save(dataKey)
         }
     }
 
+    /// Blocks until updates queued so far have been written, e.g. before the
+    /// owning client shuts down.
+    static func waitForPendingWrites() {
+        cacheQueue.sync { }
+    }
+
     func getDiagnosticId() -> DiagnosticId {
-        let stored = cacheQueue.sync { loadOrSetup() }
+        let stored = Self.cacheQueue.sync { loadOrSetup() }
         return DiagnosticId(diagnosticId: stored.instanceId, sdkKey: sdkKey)
     }
 
@@ -48,7 +54,7 @@ final class DiagnosticCache: DiagnosticCaching {
         let now = Date().millisSince1970
         // swiftlint:disable:next implicitly_unwrapped_optional
         var stored: StoreData!
-        cacheQueue.sync {
+        Self.cacheQueue.sync {
             stored = loadOrSetup()
             updateStoredData {
                 $0.dataSinceDate = now
@@ -92,7 +98,7 @@ final class DiagnosticCache: DiagnosticCaching {
     // disk flush; they carry no result, so callers do not wait for them.
     // The serial cache queue keeps them ordered with the synchronous readers.
     private func updateStoredDataAsync(updateFunc: @escaping (inout StoreData) -> Void) {
-        cacheQueue.async { self.updateStoredData(updateFunc: updateFunc) }
+        Self.cacheQueue.async { self.updateStoredData(updateFunc: updateFunc) }
     }
 
     private func updateStoredData(updateFunc: (inout StoreData) -> Void) {
