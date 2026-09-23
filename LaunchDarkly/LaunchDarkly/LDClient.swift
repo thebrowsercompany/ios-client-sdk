@@ -242,7 +242,9 @@ public class LDClient {
         internalFlush()
         internalSetOnline(false)
         // Connection information and diagnostics persist asynchronously;
-        // closing waits for pending writes so they survive shutdown.
+        // this waits for writes queued up to this point. Work that callbacks
+        // from the flush or the stopping synchronizer schedule afterwards is
+        // persisted on its own queue but not awaited here.
         ConnectionInformationStore.waitForPendingWrites()
         DiagnosticCache.waitForPendingWrites()
         hasStarted = false
