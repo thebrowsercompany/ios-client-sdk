@@ -30,7 +30,13 @@ final class DiagnosticCache: DiagnosticCaching {
             let oldId = DiagnosticId(diagnosticId: storedData.instanceId, sdkKey: sdkKey)
             lastStats = DiagnosticStats(id: oldId, creationDate: Date().millisSince1970, dataSinceDate: storedData.dataSinceDate, droppedEvents: storedData.droppedEvents, eventsInLastBatch: storedData.eventsInLastBatch, streamInits: storedData.streamInits)
         }
-        StoreData.defaultWithRandomId().save(dataKey)
+        // Saving rewrites the app's preferences file and can block on a disk
+        // flush, so it runs on the cache queue rather than the initializing
+        // thread. Later reads and updates go through the same serial queue.
+        let dataKey = self.dataKey
+        cacheQueue.async {
+            StoreData.defaultWithRandomId().save(dataKey)
+        }
     }
 
     func getDiagnosticId() -> DiagnosticId {
@@ -60,15 +66,15 @@ final class DiagnosticCache: DiagnosticCaching {
     }
 
     func incrementDroppedEventCount() {
-        updateStoredDataSync { $0.droppedEvents += 1 }
+        updateStoredDataAsync { $0.droppedEvents += 1 }
     }
 
     func recordEventsInLastBatch(eventsInLastBatch: Int) {
-        updateStoredDataSync { $0.eventsInLastBatch = eventsInLastBatch }
+        updateStoredDataAsync { $0.eventsInLastBatch = eventsInLastBatch }
     }
 
     func addStreamInit(streamInit: DiagnosticStreamInit) {
-        updateStoredDataSync { $0.streamInits.append(streamInit) }
+        updateStoredDataAsync { $0.streamInits.append(streamInit) }
     }
 
     private func loadOrSetup() -> StoreData {
@@ -82,8 +88,11 @@ final class DiagnosticCache: DiagnosticCaching {
         }
     }
 
-    private func updateStoredDataSync(updateFunc: (inout StoreData) -> Void) {
-        cacheQueue.sync { updateStoredData(updateFunc: updateFunc) }
+    // These updates rewrite the app's preferences file and can block on a
+    // disk flush; they carry no result, so callers do not wait for them.
+    // The serial cache queue keeps them ordered with the synchronous readers.
+    private func updateStoredDataAsync(updateFunc: @escaping (inout StoreData) -> Void) {
+        cacheQueue.async { self.updateStoredData(updateFunc: updateFunc) }
     }
 
     private func updateStoredData(updateFunc: (inout StoreData) -> Void) {
