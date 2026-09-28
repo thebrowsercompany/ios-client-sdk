@@ -20,7 +20,10 @@ extension LDFlagKey {
 }
 
 /// An error thrown from APIs when an invalid argument is provided.
-@objc public class LDInvalidArgumentError: NSObject, Error {
+#if !os(Windows)
+@objc
+#endif
+public class LDInvalidArgumentError: NSObject, Error {
     /// A description of the error.
     public let localizedDescription: String
 

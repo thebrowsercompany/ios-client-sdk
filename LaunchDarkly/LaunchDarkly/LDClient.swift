@@ -261,14 +261,20 @@ public class LDClient {
         os_log("%s stopped", log: config.logger, type: .debug, typeName(and: #function))
     }
 
-    @objc private func didEnterBackground() {
+    #if !os(Windows)
+    @objc
+    #endif
+    private func didEnterBackground() {
         os_log("%s", log: config.logger, type: .debug, typeName(and: #function))
         Thread.performOnMain {
             runMode = .background
         }
     }
 
-    @objc private func willEnterForeground() {
+    #if !os(Windows)
+    @objc
+    #endif
+    private func willEnterForeground() {
         os_log("%s", log: config.logger, type: .debug, typeName(and: #function))
         Thread.performOnMain {
             runMode = .foreground
@@ -814,7 +820,10 @@ public class LDClient {
         }
     }
 
-    @objc private func didCloseEventSource() {
+    #if !os(Windows)
+    @objc
+    #endif
+    private func didCloseEventSource() {
         os_log("%s", log: config.logger, type: .debug, typeName(and: #function))
         self.connectionInformation = ConnectionInformation.lastSuccessfulConnectionCheck(connectionInformation: self.connectionInformation)
     }
@@ -991,6 +1000,9 @@ public class LDClient {
     private var _initialized = false
     private var initializedQueue = DispatchQueue(label: "com.launchdarkly.LDClient.initializedQueue")
     private var identifyQueue = SheddingQueue()
+    #if os(Windows)
+    private var notificationTokens: [NSObjectProtocol] = []
+    #endif
 
     /// The hooks the configuration registers, followed by the hooks the plugins contribute. Collected before the init
     /// identify series opens, so that plugin hooks take part in it.
@@ -1052,6 +1064,21 @@ public class LDClient {
                                                                     lastUpdated: cachedData.lastUpdated,
                                                                     service: service)
 
+        #if os(Windows)
+        if let backgroundNotification = SystemCapabilities.backgroundNotification {
+            notificationTokens.append(NotificationCenter.default.addObserver(forName: backgroundNotification, object: nil, queue: nil) { [weak self] _ in
+                self?.didEnterBackground()
+            })
+        }
+        if let foregroundNotification = SystemCapabilities.foregroundNotification {
+            notificationTokens.append(NotificationCenter.default.addObserver(forName: foregroundNotification, object: nil, queue: nil) { [weak self] _ in
+                self?.willEnterForeground()
+            })
+        }
+        notificationTokens.append(NotificationCenter.default.addObserver(forName: Notification.Name(FlagSynchronizer.Constants.didCloseEventSourceName), object: nil, queue: nil) { [weak self] _ in
+            self?.didCloseEventSource()
+        })
+        #else
         if let backgroundNotification = SystemCapabilities.backgroundNotification {
             NotificationCenter.default.addObserver(self, selector: #selector(didEnterBackground), name: backgroundNotification, object: nil)
         }
@@ -1060,6 +1087,7 @@ public class LDClient {
         }
 
         NotificationCenter.default.addObserver(self, selector: #selector(didCloseEventSource), name: Notification.Name(FlagSynchronizer.Constants.didCloseEventSourceName), object: nil)
+        #endif
 
         eventReporter = self.serviceFactory.makeEventReporter(config: configuration, service: service, onSyncComplete: onEventSyncComplete)
         service.resetFlagResponseCache(etag: cachedData.etag)
@@ -1085,6 +1113,14 @@ public class LDClient {
             }
         }
     }
+
+    #if os(Windows)
+    deinit {
+        for token in notificationTokens {
+            NotificationCenter.default.removeObserver(token)
+        }
+    }
+    #endif
 }
 
 extension LDClient: TypeIdentifying { }

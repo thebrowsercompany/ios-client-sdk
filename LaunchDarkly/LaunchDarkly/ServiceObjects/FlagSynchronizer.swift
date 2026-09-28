@@ -1,4 +1,7 @@
 import Foundation
+#if os(Windows)
+import FoundationNetworking
+#endif
 import Dispatch
 import LDSwiftEventSource
 import OSLog
@@ -163,7 +166,9 @@ class FlagSynchronizer: LDFlagSynchronizing, EventHandler {
             // signal completion immediately
             syncQueue.async { [self] in reportSyncComplete(.upToDate) }
         }
-        flagRequestTimer = LDTimer(withTimeInterval: pollingInterval, fireQueue: syncQueue, fireAt: fireAt, execute: processTimer)
+        flagRequestTimer = LDTimer(withTimeInterval: pollingInterval, fireQueue: syncQueue, fireAt: fireAt) { [weak self] in
+            self?.processTimer()
+        }
         os_log("%s", log: service.config.logger, type: .debug, typeName(and: #function))
     }
 
@@ -179,7 +184,10 @@ class FlagSynchronizer: LDFlagSynchronizing, EventHandler {
         flagRequestTimer = nil
     }
 
-    @objc private func processTimer() {
+    #if !os(Windows)
+    @objc
+    #endif
+    private func processTimer() {
         makeFlagRequest(isOnline: isOnline)
     }
 

@@ -1,4 +1,7 @@
 import Foundation
+#if os(Windows)
+import FoundationNetworking
+#endif
 import OSLog
 
 public struct ConnectionInformation: Codable, CustomStringConvertible {

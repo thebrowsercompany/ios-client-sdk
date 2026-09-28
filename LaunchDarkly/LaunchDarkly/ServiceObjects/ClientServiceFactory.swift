@@ -89,7 +89,9 @@ final class ClientServiceFactory: ClientServiceCreating {
         config.headerTransform = { delegate?(url, $0) ?? $0 }
         config.headers = httpHeaders
         config.method = connectMethod
+        #if canImport(os)
         config.logger = self.logger
+        #endif
         if let errorHandler = errorHandler {
             config.connectionErrorHandler = errorHandler
         }

@@ -1,4 +1,8 @@
 import Foundation
+#if os(Windows)
+import FoundationNetworking
+import AnyURLSession
+#endif
 import LDSwiftEventSource
 import OSLog
 
@@ -52,7 +56,11 @@ final class DarklyService: DarklyServiceProvider {
     let httpHeaders: HTTPHeaders
     let diagnosticCache: DiagnosticCaching?
     private(set) var serviceFactory: ClientServiceCreating
+    #if os(Windows)
+    private var session: AnyURLSession.URLSession
+    #else
     private var session: URLSession
+    #endif
     var flagRequestEtag: String?
 
   init(config: LDConfig, context: LDContext, envReporter: EnvironmentReporting, serviceFactory: ClientServiceCreating) {
@@ -70,16 +78,22 @@ final class DarklyService: DarklyServiceProvider {
         // URLSessionConfiguration is a class, but `.default` creates a new instance. This does not effect other session configuration.
         let sessionConfig = URLSessionConfiguration.default
 
+        #if !os(Windows)
         if #available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *) {
             sessionConfig.tlsMinimumSupportedProtocolVersion = .TLSv12
         } else {
             sessionConfig.tlsMinimumSupportedProtocol = .tlsProtocol12
         }
+        #endif
 
         // We always revalidate the cache which we handle manually
         sessionConfig.requestCachePolicy = .reloadIgnoringLocalCacheData
         sessionConfig.urlCache = nil
+        #if os(Windows)
+        self.session = AnyURLSession.URLSession(configuration: sessionConfig)
+        #else
         self.session = URLSession(configuration: sessionConfig)
+        #endif
     }
 
     // MARK: Feature Flags
@@ -208,12 +222,14 @@ final class DarklyService: DarklyServiceProvider {
         var headers = headers
 
         var httpBody = body
+        #if canImport(Compression)
         if config.enableCompression {
             if let compressed = body.ld_gzip() {
                 httpBody = compressed
                 headers.updateValue("gzip", forKey: "Content-Encoding")
             }
         }
+        #endif
 
         var request = URLRequest(url: url, ldHeaders: headers, ldConfig: config)
         request.httpMethod = URLRequest.HTTPMethods.post

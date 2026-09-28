@@ -1,3 +1,4 @@
+#if canImport(Compression)
 ///
 ///  DataCompression
 ///
@@ -478,3 +479,4 @@ private func perform(_ config: Config, source: UnsafePointer<UInt8>, sourceSize:
         }
     }
 }
+#endif
