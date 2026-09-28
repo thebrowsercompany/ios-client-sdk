@@ -24,10 +24,10 @@ class WindowsEnvironmentReporter: EnvironmentReporterChainBase {
     override var deviceModel: String {
         var status = SYSTEM_POWER_STATUS()
         guard GetSystemPowerStatus(&status) else { return "unknown" }
-        switch status.ACLineStatus {
-        case 0, 1: return "laptop"
-        case 255: return "desktop"
-        default: return "unknown"
+        switch status.BatteryFlag {
+        case 255: return "unknown"
+        case let flag where flag & 128 != 0: return "desktop" // No system battery.
+        default: return "laptop"
         }
     }
 }
