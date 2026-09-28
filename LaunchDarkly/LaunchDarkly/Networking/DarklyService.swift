@@ -128,7 +128,7 @@ final class DarklyService: DarklyServiceProvider {
         }
 
         self.session.dataTask(with: request) { [weak self] data, response, error in
-            DispatchQueue.main.async {
+            DispatchQueue.main.async { [weak self] in
                 self?.processEtag(from: (data: data, urlResponse: response, error: error, etag: self?.flagRequestEtag))
                 completion?((data: data, urlResponse: response, error: error, etag: self?.flagRequestEtag))
             }
