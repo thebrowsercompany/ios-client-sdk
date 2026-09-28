@@ -1,5 +1,7 @@
 import Foundation
+#if !os(Windows)
 import OSLog
+#endif
 
 protocol ContextModifier {
     func modifyContext(_ context: LDContext) -> LDContext

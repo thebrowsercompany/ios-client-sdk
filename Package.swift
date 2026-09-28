@@ -2,16 +2,15 @@
 
 import PackageDescription
 
-var launchDarklyDependencies: [Target.Dependency] = [
+let launchDarklyDependencies: [Target.Dependency] = [
     .product(name: "LDSwiftEventSource", package: "LDSwiftEventSource")
 ]
 var launchDarklyExcludes = ["Support"]
 #if os(Windows)
-launchDarklyDependencies.append("OSLog")
 launchDarklyExcludes.append("ObjectiveC")
 #endif
 
-var launchDarklyTargets: [Target] = [
+let launchDarklyTargets: [Target] = [
     .target(
         name: "LaunchDarkly",
         dependencies: launchDarklyDependencies,
@@ -33,10 +32,6 @@ var launchDarklyTargets: [Target] = [
         exclude: ["LaunchDarklyTests/Info.plist", "LaunchDarklyTests/.swiftlint.yml"],
         sources: ["GeneratedCode", "LaunchDarklyTests"]),
 ]
-#if os(Windows)
-launchDarklyTargets.append(.target(name: "OSLog", path: "LaunchDarkly/OSLog"))
-#endif
-
 let package = Package(
     name: "LaunchDarkly",
     platforms: [

@@ -1,6 +1,8 @@
 import Foundation
 import LDSwiftEventSource
+#if !os(Windows)
 import OSLog
+#endif
 
 protocol ClientServiceCreating {
     func makeKeyedValueCache(cacheKey: String?) -> KeyedValueCaching

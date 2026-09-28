@@ -1,3 +1,4 @@
+#if os(Windows)
 public let osLogStringSectionName = ".rdata$oslogstring"
 
 public struct OSLog {
@@ -15,3 +16,4 @@ public struct OSLogType {
 
 // SDK messages can contain flag values and context attributes; Windows logging needs redaction before it can be enabled.
 public func os_log(_ message: StaticString, log: OSLog = .default, type: OSLogType = .default, _ args: CVarArg...) {}
+#endif

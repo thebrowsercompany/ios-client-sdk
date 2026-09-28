@@ -4,7 +4,9 @@ import FoundationNetworking
 #endif
 import Dispatch
 import LDSwiftEventSource
+#if !os(Windows)
 import OSLog
+#endif
 
 // sourcery: autoMockable
 protocol LDFlagSynchronizing {

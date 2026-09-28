@@ -1,5 +1,7 @@
 import Foundation
+#if !os(Windows)
 import OSLog
+#endif
 
 enum StorageItem: Codable {
     case item(FeatureFlag)

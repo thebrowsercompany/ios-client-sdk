@@ -4,7 +4,9 @@ import FoundationNetworking
 import AnyURLSession
 #endif
 import LDSwiftEventSource
+#if !os(Windows)
 import OSLog
+#endif
 
 // swiftlint:disable:next large_tuple
 typealias ServiceResponse = (data: Data?, urlResponse: URLResponse?, error: Error?, etag: String?)

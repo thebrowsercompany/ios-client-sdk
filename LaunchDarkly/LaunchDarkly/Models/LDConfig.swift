@@ -2,7 +2,9 @@ import Foundation
 #if os(Windows)
 import FoundationNetworking
 #endif
+#if !os(Windows)
 import OSLog
+#endif
 
 /// Defines the connection modes the SDK may be configured to use to retrieve feature flag data from LaunchDarkly.
 public enum LDStreamingMode {

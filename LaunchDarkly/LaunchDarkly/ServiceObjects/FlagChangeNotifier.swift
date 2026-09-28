@@ -1,5 +1,7 @@
 import Foundation
+#if !os(Windows)
 import OSLog
+#endif
 
 // sourcery: autoMockable
 protocol FlagChangeNotifying {

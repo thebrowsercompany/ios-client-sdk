@@ -2,7 +2,9 @@ import Foundation
 #if os(Windows)
 import FoundationNetworking
 #endif
+#if !os(Windows)
 import OSLog
+#endif
 
 typealias EventSyncCompleteClosure = ((SynchronizingError?) -> Void)
 // sourcery: autoMockable

@@ -1,7 +1,9 @@
 import Foundation
 
 #if !(LD_OBJC_EXCLUDE_PURE_SWIFT_APIS)
+#if !os(Windows)
 import OSLog
+#endif
 #endif
 
 /**
