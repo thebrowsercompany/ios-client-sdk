@@ -1,4 +1,5 @@
 import Foundation
+// Windows CNG provides the SHA-256 digest used for context hashing; CommonCrypto is Apple-only.
 #if os(Windows)
 import WinSDK
 #else
@@ -16,6 +17,7 @@ class Util {
     class func sha256(_ str: String) -> Data {
         let data = Data(str.utf8)
         #if os(Windows)
+        // Keep the same 32-byte SHA-256 result as the CommonCrypto path so existing context hashes remain stable.
         return data.sha256Digest
         #else
         var digest = [UInt8](repeating: 0, count: Int(CC_SHA256_DIGEST_LENGTH))
@@ -28,6 +30,8 @@ class Util {
 }
 
 #if os(Windows)
+// BCrypt operates on byte buffers and opaque handles. Close both handles after finishing the digest,
+// including when hashing an empty context key.
 private extension Data {
     var sha256Digest: Data {
         func check(_ status: NTSTATUS) {

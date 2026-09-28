@@ -1,7 +1,9 @@
 import Foundation
+// Windows keeps HTTP response types in FoundationNetworking rather than Foundation.
 #if os(Windows)
 import FoundationNetworking
 #endif
+// Logging compatibility symbols are built into the SDK on Windows to avoid a fake global OSLog module.
 #if !os(Windows)
 import OSLog
 #endif

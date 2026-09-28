@@ -1,4 +1,5 @@
 import Foundation
+// Windows exports URLResponse from FoundationNetworking, not Foundation.
 #if os(Windows)
 import FoundationNetworking
 #endif

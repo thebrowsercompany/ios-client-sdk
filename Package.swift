@@ -6,6 +6,7 @@ let launchDarklyDependencies: [Target.Dependency] = [
     .product(name: "LDSwiftEventSource", package: "LDSwiftEventSource")
 ]
 var launchDarklyExcludes = ["Support"]
+// Windows Swift does not support the SDK's Objective-C wrappers; the Swift API remains in the target.
 #if os(Windows)
 launchDarklyExcludes.append("ObjectiveC")
 #endif
@@ -50,6 +51,7 @@ let package = Package(
         .package(url: "https://github.com/Quick/Quick.git", .exact("4.0.0")),
         .package(url: "https://github.com/Quick/Nimble.git", .exact("9.2.1")),
         .package(url: "https://github.com/mattgallagher/CwlPreconditionTesting", .exact("2.1.2")),
+        // Dia's fork supports AnyURLSession for the stream, matching the Chromium transport used for HTTP.
         .package(name: "LDSwiftEventSource", url: "https://github.com/thebrowsercompany/swift-eventsource.git", .revision("1fc81e48ba3ae0a3656888ea582e46b602bba76d")),
     ],
     targets: launchDarklyTargets,

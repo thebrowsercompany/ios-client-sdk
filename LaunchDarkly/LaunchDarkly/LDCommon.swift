@@ -20,6 +20,7 @@ extension LDFlagKey {
 }
 
 /// An error thrown from APIs when an invalid argument is provided.
+// Preserve Objective-C exposure on Apple platforms while keeping this Swift error type usable on Windows.
 #if !os(Windows)
 @objc
 #endif

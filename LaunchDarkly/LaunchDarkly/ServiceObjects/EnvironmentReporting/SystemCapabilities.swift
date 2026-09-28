@@ -30,6 +30,8 @@ class SystemCapabilities {
     static var systemName: String { UIDevice.current.systemName }
     static var operatingSystem: OperatingSystem { .tvOS }
     #elseif os(Windows)
+    // Desktop Windows has no UIKit lifecycle notifications. Identify it explicitly so the SDK
+    // enables the Windows reporter and streaming without pretending UIKit is available.
     static var backgroundNotification: Notification.Name? { nil }
     static var foregroundNotification: Notification.Name? { nil }
     static var systemName: String { "Windows" }

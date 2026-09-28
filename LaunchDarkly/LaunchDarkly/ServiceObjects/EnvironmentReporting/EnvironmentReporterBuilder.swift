@@ -37,6 +37,7 @@ class EnvironmentReporterBuilder {
             #elseif os(tvOS)
             reporters.append(TVOSEnvironmentReporter())
             #elseif os(Windows)
+            // Dia enables automatic environment attributes; use real Windows details for targeting.
             reporters.append(WindowsEnvironmentReporter())
             #endif
         }

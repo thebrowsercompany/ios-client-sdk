@@ -1,4 +1,5 @@
 import Foundation
+// Windows uses SDK-local logging symbols, keeping fake OSLog imports out of the package graph.
 #if !os(Windows)
 import OSLog
 #endif

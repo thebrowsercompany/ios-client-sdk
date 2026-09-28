@@ -1,4 +1,5 @@
 import Foundation
+// Windows uses SDK-local logging symbols rather than exposing a fake OSLog module to dependencies.
 #if !os(Windows)
 import OSLog
 #endif

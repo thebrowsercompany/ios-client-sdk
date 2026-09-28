@@ -1,3 +1,5 @@
+// Apple's Compression framework is unavailable in Windows Swift. This extension only compresses outbound
+// analytics events when the optional setting is enabled; flag downloads and parsing do not use it.
 #if canImport(Compression)
 ///
 ///  DataCompression

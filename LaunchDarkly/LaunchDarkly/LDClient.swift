@@ -1,4 +1,6 @@
 import Foundation
+// Windows logging compatibility symbols are local to this SDK; importing a fake OSLog module would
+// also change canImport(OSLog) results in unrelated Dia dependencies.
 #if !os(Windows)
 import OSLog
 #endif
@@ -263,6 +265,7 @@ public class LDClient {
         os_log("%s stopped", log: config.logger, type: .debug, typeName(and: #function))
     }
 
+    // Windows notifications call this Swift method from a block observer; selectors require Objective-C.
     #if !os(Windows)
     @objc
     #endif
@@ -273,6 +276,7 @@ public class LDClient {
         }
     }
 
+    // Keep foreground handling available on Windows without exposing an unavailable Objective-C selector.
     #if !os(Windows)
     @objc
     #endif
@@ -822,6 +826,7 @@ public class LDClient {
         }
     }
 
+    // The event-source close notification uses a block observer on Windows instead of a selector.
     #if !os(Windows)
     @objc
     #endif
@@ -1002,6 +1007,8 @@ public class LDClient {
     private var _initialized = false
     private var initializedQueue = DispatchQueue(label: "com.launchdarkly.LDClient.initializedQueue")
     private var identifyQueue = SheddingQueue()
+    // NotificationCenter retains block observers until their tokens are removed. Keep the tokens so
+    // closing a client removes its callbacks instead of leaving observers attached to a dead client.
     #if os(Windows)
     private var notificationTokens: [NSObjectProtocol] = []
     #endif
@@ -1066,6 +1073,8 @@ public class LDClient {
                                                                     lastUpdated: cachedData.lastUpdated,
                                                                     service: service)
 
+        // Windows Swift has no Objective-C selector dispatch, so register block observers for the same
+        // lifecycle and event-source notifications. Weak captures avoid retaining the client via its tokens.
         #if os(Windows)
         if let backgroundNotification = SystemCapabilities.backgroundNotification {
             notificationTokens.append(NotificationCenter.default.addObserver(forName: backgroundNotification, object: nil, queue: nil) { [weak self] _ in
@@ -1116,6 +1125,7 @@ public class LDClient {
         }
     }
 
+    // Balance the block registrations even when the client stops before any notification is posted.
     #if os(Windows)
     deinit {
         for token in notificationTokens {

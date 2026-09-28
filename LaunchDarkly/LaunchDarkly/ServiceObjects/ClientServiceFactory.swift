@@ -91,6 +91,8 @@ final class ClientServiceFactory: ClientServiceCreating {
         config.headerTransform = { delegate?(url, $0) ?? $0 }
         config.headers = httpHeaders
         config.method = connectMethod
+        // The event-source logger property requires Apple's os module. Windows streaming still runs
+        // without attaching that optional logger, and SDK log messages remain local and silent.
         #if canImport(os)
         config.logger = self.logger
         #endif

@@ -1,6 +1,7 @@
 import Foundation
 
 #if !(LD_OBJC_EXCLUDE_PURE_SWIFT_APIS)
+// Keep this Apple-only import guarded even when the Objective-C wrapper target is excluded on Windows.
 #if !os(Windows)
 import OSLog
 #endif

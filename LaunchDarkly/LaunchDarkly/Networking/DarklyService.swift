@@ -1,9 +1,12 @@
 import Foundation
+// Windows places URLSession and related URL types in FoundationNetworking. Dia's AnyURLSession adapter
+// routes SDK requests through its Chromium networking stack.
 #if os(Windows)
 import FoundationNetworking
 import AnyURLSession
 #endif
 import LDSwiftEventSource
+// Windows logging compatibility symbols live inside LaunchDarkly rather than in a public OSLog module.
 #if !os(Windows)
 import OSLog
 #endif
@@ -58,6 +61,7 @@ final class DarklyService: DarklyServiceProvider {
     let httpHeaders: HTTPHeaders
     let diagnosticCache: DiagnosticCaching?
     private(set) var serviceFactory: ClientServiceCreating
+    // The Windows adapter preserves URLSession's API while using Dia's Chromium backed transport.
     #if os(Windows)
     private var session: AnyURLSession.URLSession
     #else
@@ -80,6 +84,7 @@ final class DarklyService: DarklyServiceProvider {
         // URLSessionConfiguration is a class, but `.default` creates a new instance. This does not effect other session configuration.
         let sessionConfig = URLSessionConfiguration.default
 
+        // The Windows session configuration has no TLS minimum property; Chromium enforces its TLS policy.
         #if !os(Windows)
         if #available(iOS 13, macOS 10.15, tvOS 13, watchOS 6, *) {
             sessionConfig.tlsMinimumSupportedProtocolVersion = .TLSv12
@@ -91,6 +96,7 @@ final class DarklyService: DarklyServiceProvider {
         // We always revalidate the cache which we handle manually
         sessionConfig.requestCachePolicy = .reloadIgnoringLocalCacheData
         sessionConfig.urlCache = nil
+        // Use the same adapter for flag downloads and event POSTs so both follow Dia's network configuration.
         #if os(Windows)
         self.session = AnyURLSession.URLSession(configuration: sessionConfig)
         #else
@@ -130,6 +136,9 @@ final class DarklyService: DarklyServiceProvider {
         }
 
         self.session.dataTask(with: request) { [weak self] data, response, error in
+            // The network callback can outlive this service, and dispatching it to the main queue creates a second
+            // escaping closure. Capture the service weakly again here so queuing a response does not retain it or
+            // carry the outer closure's mutable weak reference across a concurrency boundary.
             DispatchQueue.main.async { [weak self] in
                 self?.processEtag(from: (data: data, urlResponse: response, error: error, etag: self?.flagRequestEtag))
                 completion?((data: data, urlResponse: response, error: error, etag: self?.flagRequestEtag))
@@ -224,6 +233,8 @@ final class DarklyService: DarklyServiceProvider {
         var headers = headers
 
         var httpBody = body
+        // Compression is optional for outbound event payloads. Windows has no Apple Compression module,
+        // so leave the body uncompressed and omit Content-Encoding while retaining normal event delivery.
         #if canImport(Compression)
         if config.enableCompression {
             if let compressed = body.ld_gzip() {

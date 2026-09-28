@@ -1,3 +1,4 @@
+// sysctl and CTL_HW are Darwin-only; the Windows reporter obtains its own device attributes.
 #if canImport(Darwin)
 //
 //  CwlSysctl.swift

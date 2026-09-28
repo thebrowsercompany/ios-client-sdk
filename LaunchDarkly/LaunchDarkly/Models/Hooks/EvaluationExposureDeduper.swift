@@ -128,6 +128,8 @@ open class EvaluationExposureDeduper {
      */
     public static func monotonicNow() -> TimeInterval {
         #if os(Windows)
+        // Windows Swift lacks POSIX clock_gettime; uptime is monotonic and keeps exposure windows
+        // independent of wall-clock corrections, though sleep accounting can differ from Apple.
         return ProcessInfo.processInfo.systemUptime
         #else
         var now = timespec()

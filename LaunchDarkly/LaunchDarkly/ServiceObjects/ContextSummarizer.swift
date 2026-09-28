@@ -1,4 +1,5 @@
 import Foundation
+// Windows uses the SDK-local logging shim; importing OSLog here would require an unavailable Apple module.
 #if !os(Windows)
 import OSLog
 #endif
