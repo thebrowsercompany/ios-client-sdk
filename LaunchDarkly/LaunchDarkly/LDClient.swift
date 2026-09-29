@@ -1,6 +1,6 @@
 import Foundation
 // Windows logging compatibility symbols are local to this SDK; importing a fake OSLog module would
-// also change canImport(OSLog) results in unrelated Dia dependencies.
+// also change canImport(OSLog) results in unrelated dependencies.
 #if !os(Windows)
 import OSLog
 #endif

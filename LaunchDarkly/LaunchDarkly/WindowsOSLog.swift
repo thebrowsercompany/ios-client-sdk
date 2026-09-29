@@ -16,7 +16,7 @@ public struct OSLogType {
     public static let error = OSLogType()
 }
 
-// LaunchDarkly's messages can include flag values and context attributes. Do not forward them to Dia's
-// logger or another sink until each call site is checked for private data and has a redaction policy.
+// LaunchDarkly's messages can include flag values and context attributes. Do not forward them to an
+// application logger or another sink until each call site is checked for private data and has a redaction policy.
 public func os_log(_ message: StaticString, log: OSLog = .default, type: OSLogType = .default, _ args: CVarArg...) {}
 #endif

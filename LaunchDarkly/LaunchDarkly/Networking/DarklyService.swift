@@ -1,6 +1,6 @@
 import Foundation
-// Windows places URLSession and related URL types in FoundationNetworking. Dia's AnyURLSession adapter
-// routes SDK requests through its Chromium networking stack.
+// Windows places URLSession and related URL types in FoundationNetworking. BCNY's AnyURLSession adapter
+// routes SDK requests through the embedding app's Chromium networking stack.
 #if os(Windows)
 import FoundationNetworking
 import AnyURLSession
@@ -61,7 +61,7 @@ final class DarklyService: DarklyServiceProvider {
     let httpHeaders: HTTPHeaders
     let diagnosticCache: DiagnosticCaching?
     private(set) var serviceFactory: ClientServiceCreating
-    // The Windows adapter preserves URLSession's API while using Dia's Chromium backed transport.
+    // The Windows adapter preserves URLSession's API while using Chromium-backed transport.
     #if os(Windows)
     private var session: AnyURLSession.URLSession
     #else
@@ -96,7 +96,7 @@ final class DarklyService: DarklyServiceProvider {
         // We always revalidate the cache which we handle manually
         sessionConfig.requestCachePolicy = .reloadIgnoringLocalCacheData
         sessionConfig.urlCache = nil
-        // Use the same adapter for flag downloads and event POSTs so both follow Dia's network configuration.
+        // Use the same adapter for flag downloads and event POSTs so both follow the app's network configuration.
         #if os(Windows)
         self.session = AnyURLSession.URLSession(configuration: sessionConfig)
         #else

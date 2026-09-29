@@ -2,7 +2,7 @@
 import Foundation
 import WinSDK
 
-// Supplies the automatic environment attributes Dia uses for flag targeting. Generic SDK fallbacks
+// Supplies the automatic environment attributes BCNY apps use for flag targeting. Generic SDK fallbacks
 // would identify Windows devices as unknown and could put those clients in the wrong targeting segment.
 class WindowsEnvironmentReporter: EnvironmentReporterChainBase {
     override var applicationInfo: ApplicationInfo {
