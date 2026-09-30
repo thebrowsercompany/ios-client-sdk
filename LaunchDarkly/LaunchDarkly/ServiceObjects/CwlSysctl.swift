@@ -1,3 +1,5 @@
+// sysctl and CTL_HW are Darwin-only; the Windows reporter obtains its own device attributes.
+#if canImport(Darwin)
 //
 //  CwlSysctl.swift
 //  CwlUtils
@@ -78,3 +80,4 @@ struct Sysctl {
         return try! Sysctl.stringForKeys([CTL_HW, HW_MODEL])
     }
 }
+#endif

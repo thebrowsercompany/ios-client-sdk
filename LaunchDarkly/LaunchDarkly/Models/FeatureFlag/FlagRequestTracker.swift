@@ -1,5 +1,8 @@
 import Foundation
+// Windows logging compatibility lives inside LaunchDarkly, without exporting an OSLog module.
+#if !os(Windows)
 import OSLog
+#endif
 
 struct FlagRequestTracker {
     let startDate = Date()

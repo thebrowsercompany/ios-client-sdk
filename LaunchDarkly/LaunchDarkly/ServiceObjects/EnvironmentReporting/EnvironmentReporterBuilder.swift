@@ -36,6 +36,9 @@ class EnvironmentReporterBuilder {
             reporters.append(MacOSEnvironmentReporter())
             #elseif os(tvOS)
             reporters.append(TVOSEnvironmentReporter())
+            #elseif os(Windows)
+            // BCNY's Windows apps enable automatic environment attributes; use real details for targeting.
+            reporters.append(WindowsEnvironmentReporter())
             #endif
         }
 

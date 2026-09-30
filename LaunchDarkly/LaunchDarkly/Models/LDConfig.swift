@@ -1,5 +1,12 @@
 import Foundation
+// Windows Foundation keeps URLSession configuration in FoundationNetworking.
+#if os(Windows)
+import FoundationNetworking
+#endif
+// Windows uses the SDK-local logging shim, avoiding a synthetic OSLog module visible to other packages.
+#if !os(Windows)
 import OSLog
+#endif
 
 /// Defines the connection modes the SDK may be configured to use to retrieve feature flag data from LaunchDarkly.
 public enum LDStreamingMode {
@@ -32,7 +39,11 @@ public enum LDStreamingMode {
  you can use targeting rules to enable "dark mode" for all customers who are using version 15 or greater, and ensure
  that customers on previous versions don't use the earlier, unfinished version of the feature.
  */
-@objc public enum AutoEnvAttributes: Int {
+// Windows callers use this enum from Swift; Objective-C interoperability is unavailable there.
+#if !os(Windows)
+@objc
+#endif
+public enum AutoEnvAttributes: Int {
     /// Enables the Auto EnvironmentAttributes functionality.
     case enabled
     /// Disables the Auto EnvironmentAttributes functionality.
@@ -440,7 +451,10 @@ public struct LDConfig {
     public let minima: Minima
 
     /// An NSObject wrapper for the Swift LDConfig struct. Intended for use in mixed apps when Swift code needs to pass a config into an Objective-C method.
+    // The wrapper target is excluded on Windows because Swift cannot import its Objective-C runtime APIs.
+    #if !os(Windows)
     public var objcLdConfig: ObjcLDConfig { ObjcLDConfig(self) }
+    #endif
 
     /// Initial set of hooks for the client.
     ///

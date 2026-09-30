@@ -10,25 +10,29 @@ import AppKit
 import UIKit
 #endif
 
+// Windows must be listed explicitly so automatic environment targeting and streaming capabilities
+// describe Windows clients rather than falling through to unknown with disabled defaults.
 enum OperatingSystem: String {
-  case iOS, watchOS, macOS, tvOS, unknown
+  case iOS, watchOS, macOS, tvOS, Windows, unknown
 
   static var allOperatingSystems: [OperatingSystem] {
-    [.iOS, .watchOS, .macOS, .tvOS]
+    [.iOS, .watchOS, .macOS, .tvOS, .Windows]
   }
 
   var isBackgroundEnabled: Bool {
     OperatingSystem.backgroundEnabledOperatingSystems.contains(self)
   }
   static var backgroundEnabledOperatingSystems: [OperatingSystem] {
-    [.macOS]
+    // Desktop Windows continues to fetch and publish flags while its windows are not foregrounded.
+    [.macOS, .Windows]
   }
 
   var isStreamingEnabled: Bool {
     OperatingSystem.streamingEnabledOperatingSystems.contains(self)
   }
   static var streamingEnabledOperatingSystems: [OperatingSystem] {
-    [.iOS, .macOS, .tvOS]
+    // Windows supports live flag changes, so it must enable the SDK's streaming path.
+    [.iOS, .macOS, .tvOS, .Windows]
   }
 }
 

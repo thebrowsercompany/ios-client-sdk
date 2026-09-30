@@ -1,7 +1,14 @@
 import Foundation
+// Windows exports URLSession response types through FoundationNetworking.
+#if os(Windows)
+import FoundationNetworking
+#endif
 import Dispatch
 import LDSwiftEventSource
+// Windows logging compatibility is private to LaunchDarkly rather than a package-wide fake OSLog module.
+#if !os(Windows)
 import OSLog
+#endif
 
 // sourcery: autoMockable
 protocol LDFlagSynchronizing {
@@ -163,7 +170,11 @@ class FlagSynchronizer: LDFlagSynchronizing, EventHandler {
             // signal completion immediately
             syncQueue.async { [self] in reportSyncComplete(.upToDate) }
         }
-        flagRequestTimer = LDTimer(withTimeInterval: pollingInterval, fireQueue: syncQueue, fireAt: fireAt, execute: processTimer)
+        // The synchronizer owns the repeating timer. A strong method capture would keep the synchronizer
+        // alive through its own timer after the client shuts down, so resolve it weakly for each poll.
+        flagRequestTimer = LDTimer(withTimeInterval: pollingInterval, fireQueue: syncQueue, fireAt: fireAt) { [weak self] in
+            self?.processTimer()
+        }
         os_log("%s", log: service.config.logger, type: .debug, typeName(and: #function))
     }
 
@@ -179,7 +190,11 @@ class FlagSynchronizer: LDFlagSynchronizing, EventHandler {
         flagRequestTimer = nil
     }
 
-    @objc private func processTimer() {
+    // Windows Timer uses a closure instead of an Objective-C selector, so this method stays pure Swift.
+    #if !os(Windows)
+    @objc
+    #endif
+    private func processTimer() {
         makeFlagRequest(isOnline: isOnline)
     }
 

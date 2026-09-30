@@ -1,5 +1,9 @@
 import Foundation
+// Windows logging compatibility symbols are local to this SDK; importing a fake OSLog module would
+// also change canImport(OSLog) results in unrelated dependencies.
+#if !os(Windows)
 import OSLog
+#endif
 
 enum LDClientRunMode {
     case foreground, background
@@ -261,14 +265,22 @@ public class LDClient {
         os_log("%s stopped", log: config.logger, type: .debug, typeName(and: #function))
     }
 
-    @objc private func didEnterBackground() {
+    // Windows notifications call this Swift method from a block observer; selectors require Objective-C.
+    #if !os(Windows)
+    @objc
+    #endif
+    private func didEnterBackground() {
         os_log("%s", log: config.logger, type: .debug, typeName(and: #function))
         Thread.performOnMain {
             runMode = .background
         }
     }
 
-    @objc private func willEnterForeground() {
+    // Keep foreground handling available on Windows without exposing an unavailable Objective-C selector.
+    #if !os(Windows)
+    @objc
+    #endif
+    private func willEnterForeground() {
         os_log("%s", log: config.logger, type: .debug, typeName(and: #function))
         Thread.performOnMain {
             runMode = .foreground
@@ -814,7 +826,11 @@ public class LDClient {
         }
     }
 
-    @objc private func didCloseEventSource() {
+    // The event-source close notification uses a block observer on Windows instead of a selector.
+    #if !os(Windows)
+    @objc
+    #endif
+    private func didCloseEventSource() {
         os_log("%s", log: config.logger, type: .debug, typeName(and: #function))
         self.connectionInformation = ConnectionInformation.lastSuccessfulConnectionCheck(connectionInformation: self.connectionInformation)
     }
@@ -991,6 +1007,11 @@ public class LDClient {
     private var _initialized = false
     private var initializedQueue = DispatchQueue(label: "com.launchdarkly.LDClient.initializedQueue")
     private var identifyQueue = SheddingQueue()
+    // NotificationCenter retains block observers until their tokens are removed. Keep the tokens so
+    // closing a client removes its callbacks instead of leaving observers attached to a dead client.
+    #if os(Windows)
+    private var notificationTokens: [NSObjectProtocol] = []
+    #endif
 
     /// The hooks the configuration registers, followed by the hooks the plugins contribute. Collected before the init
     /// identify series opens, so that plugin hooks take part in it.
@@ -1052,6 +1073,23 @@ public class LDClient {
                                                                     lastUpdated: cachedData.lastUpdated,
                                                                     service: service)
 
+        // Windows Swift has no Objective-C selector dispatch, so register block observers for the same
+        // lifecycle and event-source notifications. Weak captures avoid retaining the client via its tokens.
+        #if os(Windows)
+        if let backgroundNotification = SystemCapabilities.backgroundNotification {
+            notificationTokens.append(NotificationCenter.default.addObserver(forName: backgroundNotification, object: nil, queue: nil) { [weak self] _ in
+                self?.didEnterBackground()
+            })
+        }
+        if let foregroundNotification = SystemCapabilities.foregroundNotification {
+            notificationTokens.append(NotificationCenter.default.addObserver(forName: foregroundNotification, object: nil, queue: nil) { [weak self] _ in
+                self?.willEnterForeground()
+            })
+        }
+        notificationTokens.append(NotificationCenter.default.addObserver(forName: Notification.Name(FlagSynchronizer.Constants.didCloseEventSourceName), object: nil, queue: nil) { [weak self] _ in
+            self?.didCloseEventSource()
+        })
+        #else
         if let backgroundNotification = SystemCapabilities.backgroundNotification {
             NotificationCenter.default.addObserver(self, selector: #selector(didEnterBackground), name: backgroundNotification, object: nil)
         }
@@ -1060,6 +1098,7 @@ public class LDClient {
         }
 
         NotificationCenter.default.addObserver(self, selector: #selector(didCloseEventSource), name: Notification.Name(FlagSynchronizer.Constants.didCloseEventSourceName), object: nil)
+        #endif
 
         eventReporter = self.serviceFactory.makeEventReporter(config: configuration, service: service, onSyncComplete: onEventSyncComplete)
         service.resetFlagResponseCache(etag: cachedData.etag)
@@ -1085,6 +1124,15 @@ public class LDClient {
             }
         }
     }
+
+    // Balance the block registrations even when the client stops before any notification is posted.
+    #if os(Windows)
+    deinit {
+        for token in notificationTokens {
+            NotificationCenter.default.removeObserver(token)
+        }
+    }
+    #endif
 }
 
 extension LDClient: TypeIdentifying { }

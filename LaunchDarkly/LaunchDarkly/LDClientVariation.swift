@@ -1,5 +1,8 @@
 import Foundation
+// Windows uses SDK-local OSLog compatibility symbols; a separate OSLog module would affect other packages.
+#if !os(Windows)
 import OSLog
+#endif
 
 extension LDClient {
     // MARK: Flag variation methods

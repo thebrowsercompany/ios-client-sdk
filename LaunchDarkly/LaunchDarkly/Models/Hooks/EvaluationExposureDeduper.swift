@@ -117,10 +117,9 @@ open class EvaluationExposureDeduper {
      Reads the clock a window is measured against, in seconds. This is what `shouldRecord(key:now:)` reads when it is
      not given a time.
 
-     `CLOCK_MONOTONIC` counts from an arbitrary point rather than from the epoch, so that correcting the device clock
-     cannot stretch a window: were this `Date()`, a correction that moved the clock backwards would leave every recorded
-     time in the future and suppress those flags until real time caught up. It is POSIX rather than one of Darwin's own
-     clocks, so the same reading is available on every platform Swift builds for.
+     A monotonic clock counts from an arbitrary point rather than from the epoch, so correcting the device clock cannot
+     stretch a window: were this `Date()`, a correction that moved the clock backwards would leave every recorded time
+     in the future and suppress those flags until real time caught up.
 
      On Apple platforms it keeps advancing while the device sleeps, unlike `mach_absolute_time` and everything built on
      it, such as `DispatchTime.now()` and `ProcessInfo.systemUptime`, so a window is an interval of real time rather
@@ -128,9 +127,15 @@ open class EvaluationExposureDeduper {
      the suspension, which holds a repeat back for longer rather than reporting one too often.
      */
     public static func monotonicNow() -> TimeInterval {
+        #if os(Windows)
+        // Windows Swift lacks POSIX clock_gettime; uptime is monotonic and keeps exposure windows
+        // independent of wall-clock corrections, though sleep accounting can differ from Apple.
+        return ProcessInfo.processInfo.systemUptime
+        #else
         var now = timespec()
         clock_gettime(CLOCK_MONOTONIC, &now)
         return TimeInterval(now.tv_sec) + TimeInterval(now.tv_nsec) / nanosecondsPerSecond
+        #endif
     }
 
     private static let nanosecondsPerSecond: TimeInterval = 1_000_000_000

@@ -1,6 +1,8 @@
 import Foundation
 import LDSwiftEventSource
+#if !os(Windows)
 import OSLog
+#endif
 
 protocol ClientServiceCreating {
     func makeKeyedValueCache(cacheKey: String?) -> KeyedValueCaching
@@ -89,7 +91,11 @@ final class ClientServiceFactory: ClientServiceCreating {
         config.headerTransform = { delegate?(url, $0) ?? $0 }
         config.headers = httpHeaders
         config.method = connectMethod
+        // The event-source logger property requires Apple's os module. Windows streaming still runs
+        // without attaching that optional logger, and SDK log messages remain local and silent.
+        #if canImport(os)
         config.logger = self.logger
+        #endif
         if let errorHandler = errorHandler {
             config.connectionErrorHandler = errorHandler
         }

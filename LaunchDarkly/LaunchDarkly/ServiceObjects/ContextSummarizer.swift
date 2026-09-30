@@ -1,5 +1,8 @@
 import Foundation
+// Windows uses the SDK-local logging shim; importing OSLog here would require an unavailable Apple module.
+#if !os(Windows)
 import OSLog
+#endif
 
 /// Manages per-context summary events by tracking separate FlagRequestTracker instances for each unique context.
 /// Each context is identified by its hash, and summaries are generated separately for each context during flush.

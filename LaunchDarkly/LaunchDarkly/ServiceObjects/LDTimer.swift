@@ -21,11 +21,22 @@ final class LDTimer: TimeResponding {
 
         // the run loop retains the timer, so the property is weak to avoid a retain cycle. Setting the timer to a strong reference is important so that the timer doesn't get nil'd before it's added to the run loop.
         let timer: Timer
+        // Foundation's Windows Timer has no Objective-C target/selector initializer. The block timer must
+        // preserve fireAt for polling alignment and capture self weakly because the run loop retains it.
+        #if os(Windows)
+        timer = Timer(timeInterval: timeInterval, repeats: true) { [weak self] _ in
+            self?.timerFired()
+        }
+        if let fireAt {
+            timer.fireDate = fireAt
+        }
+        #else
         if let at = fireAt {
             timer = Timer(fireAt: at, interval: timeInterval, target: self, selector: #selector(timerFired), userInfo: nil, repeats: true)
         } else {
             timer = Timer(timeInterval: timeInterval, target: self, selector: #selector(timerFired), userInfo: nil, repeats: true)
         }
+        #endif
         self.timer = timer
         RunLoop.main.add(timer, forMode: RunLoop.Mode.default)
     }
@@ -34,7 +45,11 @@ final class LDTimer: TimeResponding {
         timer?.invalidate()
     }
 
-    @objc private func timerFired() {
+    // Only Apple timer targets need Objective-C selector exposure.
+    #if !os(Windows)
+    @objc
+    #endif
+    private func timerFired() {
         fireQueue.async { [weak self] in
             guard (self?.isCancelled ?? true) == false
             else { return }

@@ -1,4 +1,8 @@
 import Foundation
+// Windows exports HTTPURLResponse from FoundationNetworking, not Foundation.
+#if os(Windows)
+import FoundationNetworking
+#endif
 
 extension HTTPURLResponse {
 

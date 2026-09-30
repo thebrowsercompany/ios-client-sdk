@@ -1,4 +1,8 @@
 import Foundation
+// Windows exports URLResponse from FoundationNetworking, not Foundation.
+#if os(Windows)
+import FoundationNetworking
+#endif
 
 extension URLResponse {
     var httpStatusCode: Int? { (self as? HTTPURLResponse)?.statusCode }

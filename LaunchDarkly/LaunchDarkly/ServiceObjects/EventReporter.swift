@@ -1,5 +1,12 @@
 import Foundation
+// Windows places URLSession and related HTTP types in FoundationNetworking.
+#if os(Windows)
+import FoundationNetworking
+#endif
+// Keep OSLog compatibility private to this target so unrelated packages do not compile Apple logging paths.
+#if !os(Windows)
 import OSLog
+#endif
 
 typealias EventSyncCompleteClosure = ((SynchronizingError?) -> Void)
 // sourcery: autoMockable

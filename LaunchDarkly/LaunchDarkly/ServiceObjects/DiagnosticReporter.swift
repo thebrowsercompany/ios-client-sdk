@@ -1,5 +1,12 @@
 import Foundation
+// Windows places URLSession and related HTTP types in FoundationNetworking.
+#if os(Windows)
+import FoundationNetworking
+#endif
+// Keep Apple's OSLog import off Windows; SDK-local symbols avoid changing other packages' canImport checks.
+#if !os(Windows)
 import OSLog
+#endif
 
 // sourcery: autoMockable
 protocol DiagnosticReporting {

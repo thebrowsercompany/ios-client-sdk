@@ -1,5 +1,8 @@
 import Foundation
+// Windows uses SDK-local logging symbols so dependent packages do not see a fake OSLog module.
+#if !os(Windows)
 import OSLog
+#endif
 
 protocol ContextModifier {
     func modifyContext(_ context: LDContext) -> LDContext
