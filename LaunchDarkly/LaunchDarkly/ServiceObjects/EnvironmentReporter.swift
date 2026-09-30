@@ -31,7 +31,7 @@ enum OperatingSystem: String {
     OperatingSystem.streamingEnabledOperatingSystems.contains(self)
   }
   static var streamingEnabledOperatingSystems: [OperatingSystem] {
-    // Arc and Dia observe live flag changes, so Windows must enable the SDK's streaming path.
+    // Windows supports live flag changes, so it must enable the SDK's streaming path.
     [.iOS, .macOS, .tvOS, .Windows]
   }
 }
