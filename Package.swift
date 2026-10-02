@@ -52,7 +52,7 @@ let package = Package(
         .package(url: "https://github.com/Quick/Nimble.git", .exact("9.2.1")),
         .package(url: "https://github.com/mattgallagher/CwlPreconditionTesting", .exact("2.1.2")),
         // BCNY's fork supports AnyURLSession for the stream, matching the Chromium transport used for HTTP.
-        .package(name: "LDSwiftEventSource", url: "https://github.com/thebrowsercompany/swift-eventsource.git", .revision("7c0155114db6684ac3283c31527436cdb610fd90")),
+        .package(name: "LDSwiftEventSource", url: "https://github.com/thebrowsercompany/swift-eventsource.git", .revision("92282384998af0ec1dc4cd120c402891ea31ab5d")),
     ],
     targets: launchDarklyTargets,
     swiftLanguageVersions: [.v5])
