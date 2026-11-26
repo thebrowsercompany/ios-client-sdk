@@ -7,6 +7,48 @@ protocol TimeResponding {
     func cancel()
 }
 
+#if os(Windows)
+// The Windows Chromium message pump services libdispatch without running Foundation's run loop.
+final class LDTimer: TimeResponding {
+    private let timer: DispatchSourceTimer
+    private let lock = NSLock()
+    private var nextFireDate: Date?
+
+    var fireDate: Date? {
+        lock.withLock { nextFireDate }
+    }
+
+    init(withTimeInterval timeInterval: TimeInterval, fireQueue: DispatchQueue = .main, fireAt: Date? = nil, execute: @escaping () -> Void) {
+        let now = Date()
+        let fireDate = max(fireAt ?? now.addingTimeInterval(timeInterval), now)
+        nextFireDate = fireDate
+        timer = DispatchSource.makeTimerSource(queue: fireQueue)
+        timer.schedule(deadline: .now() + max(0, fireDate.timeIntervalSinceNow), repeating: timeInterval)
+        timer.setEventHandler { [weak self] in
+            guard let self else { return }
+            let shouldFire = self.lock.withLock {
+                guard let fireDate = self.nextFireDate else { return false }
+                let intervals = max(1, floor(Date().timeIntervalSince(fireDate) / timeInterval) + 1)
+                self.nextFireDate = fireDate.addingTimeInterval(intervals * timeInterval)
+                return true
+            }
+            if shouldFire {
+                execute()
+            }
+        }
+        timer.resume()
+    }
+
+    deinit {
+        timer.cancel()
+    }
+
+    func cancel() {
+        lock.withLock { nextFireDate = nil }
+        timer.cancel()
+    }
+}
+#else
 final class LDTimer: TimeResponding {
 
     private(set) weak var timer: Timer?
@@ -21,22 +63,11 @@ final class LDTimer: TimeResponding {
 
         // the run loop retains the timer, so the property is weak to avoid a retain cycle. Setting the timer to a strong reference is important so that the timer doesn't get nil'd before it's added to the run loop.
         let timer: Timer
-        // Foundation's Windows Timer has no Objective-C target/selector initializer. The block timer must
-        // preserve fireAt for polling alignment and capture self weakly because the run loop retains it.
-        #if os(Windows)
-        timer = Timer(timeInterval: timeInterval, repeats: true) { [weak self] _ in
-            self?.timerFired()
-        }
-        if let fireAt {
-            timer.fireDate = fireAt
-        }
-        #else
         if let at = fireAt {
             timer = Timer(fireAt: at, interval: timeInterval, target: self, selector: #selector(timerFired), userInfo: nil, repeats: true)
         } else {
             timer = Timer(timeInterval: timeInterval, target: self, selector: #selector(timerFired), userInfo: nil, repeats: true)
         }
-        #endif
         self.timer = timer
         RunLoop.main.add(timer, forMode: RunLoop.Mode.default)
     }
@@ -45,10 +76,7 @@ final class LDTimer: TimeResponding {
         timer?.invalidate()
     }
 
-    // Only Apple timer targets need Objective-C selector exposure.
-    #if !os(Windows)
     @objc
-    #endif
     private func timerFired() {
         fireQueue.async { [weak self] in
             guard (self?.isCancelled ?? true) == false
@@ -62,3 +90,4 @@ final class LDTimer: TimeResponding {
         isCancelled = true
     }
 }
+#endif
