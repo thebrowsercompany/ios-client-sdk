@@ -1,12 +1,11 @@
 name: Run CI
 on:
-  workflow_dispatch:
   push:
-    branches: [ v11, v11.6-bcny, 'feat/**' ]
+    branches: [ v11, 'feat/**' ]
     paths-ignore:
       - '**.md' # Do not need to run CI for markdown changes.
   pull_request:
-    branches: [ v11, v11.6-bcny, 'feat/**' ]
+    branches: [ v11, 'feat/**' ]
     paths-ignore:
       - '**.md'
 
