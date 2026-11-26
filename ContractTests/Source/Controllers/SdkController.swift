@@ -90,7 +90,7 @@ final class SdkController: RouteCollection {
             }
 
             if let flushIntervalMs = events.flushIntervalMs {
-                config.eventFlushInterval =  flushIntervalMs
+                config.eventFlushInterval = flushIntervalMs / 1000.0
             }
 
             if let enableCompression = events.enableGzip {

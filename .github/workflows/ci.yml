@@ -1,11 +1,12 @@
 name: Run CI
 on:
+  workflow_dispatch:
   push:
-    branches: [ v11, 'feat/**' ]
+    branches: [ v11, v11.6-bcny, 'feat/**' ]
     paths-ignore:
       - '**.md' # Do not need to run CI for markdown changes.
   pull_request:
-    branches: [ v11, 'feat/**' ]
+    branches: [ v11, v11.6-bcny, 'feat/**' ]
     paths-ignore:
       - '**.md'
 
@@ -32,9 +33,9 @@ jobs:
           - xcode-version: 16.4.0
             ios-sim: "platform=iOS Simulator,name=iPhone 16"
             os: macos-15
-          - xcode-version: 15.4.0
-            ios-sim: "platform=iOS Simulator,name=iPhone 15"
-            os: macos-14
+          - xcode-version: 16.4.0
+            ios-sim: "platform=iOS Simulator,name=iPhone 16"
+            os: macos-15-intel
 
     steps:
       - uses: actions/checkout@v4
@@ -56,8 +57,8 @@ jobs:
         include:
           - xcode-version: 16.4.0
             os: macos-15
-          - xcode-version: 15.4.0
-            os: macos-14
+          - xcode-version: 16.4.0
+            os: macos-15-intel
 
     steps:
       - uses: actions/checkout@v4
@@ -77,8 +78,8 @@ jobs:
         include:
           - xcode-version: 16.4.0
             os: macos-15
-          - xcode-version: 15.4.0
-            os: macos-14
+          - xcode-version: 16.4.0
+            os: macos-15-intel
 
     steps:
       - uses: actions/checkout@v4
@@ -98,8 +99,8 @@ jobs:
         include:
           - xcode-version: 16.4.0
             os: macos-15
-          - xcode-version: 15.4.0
-            os: macos-14
+          - xcode-version: 16.4.0
+            os: macos-15-intel
 
     steps:
       - uses: actions/checkout@v4
@@ -119,8 +120,8 @@ jobs:
         include:
           - xcode-version: 16.4.0
             os: macos-15
-          - xcode-version: 15.4.0
-            os: macos-14
+          - xcode-version: 16.4.0
+            os: macos-15-intel
 
     steps:
       - uses: actions/checkout@v4
@@ -130,6 +131,24 @@ jobs:
           xcode-version: ${{ matrix.xcode-version }}
 
       - uses: ./.github/actions/test-swiftpm
+
+  test-windows:
+    runs-on: windows-2022
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: compnerd/gha-setup-vsdevenv@452f99effa381b81c025ccfbdccaca509bff1b29
+        with:
+          winsdk: 10.0.22621.0
+
+      - uses: compnerd/gha-setup-swift@57fe462cd3c7b05ae8fcff79b00719312e305257
+        with:
+          branch: swift-6.1-release
+          tag: 6.1-RELEASE
+
+      - name: Run Windows SDK tests
+        run: swift test --jobs 4
 
   contract-tests:
     runs-on: macos-15

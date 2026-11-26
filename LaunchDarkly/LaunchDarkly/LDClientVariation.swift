@@ -223,10 +223,22 @@ extension LDClient {
                 result = LDEvaluationDetail(value: defaultValue, variationIndex: nil, reason: ["kind": "ERROR", "errorKind": "FLAG_NOT_FOUND"])
             }
 
+            let eventFlag = featureFlag.map { flag in
+                FeatureFlag(flagKey: flag.flagKey,
+                            value: flag.value,
+                            variation: result.variationIndex,
+                            version: flag.version,
+                            flagVersion: flag.flagVersion,
+                            trackEvents: flag.trackEvents,
+                            debugEventsUntilDate: flag.debugEventsUntilDate,
+                            reason: result.reason,
+                            trackReason: flag.trackReason,
+                            prerequisites: flag.prerequisites)
+            }
             eventReporter.recordFlagEvaluationEvents(flagKey: flagKey,
                                                      value: result.value.toLDValue(),
                                                      defaultValue: defaultValue.toLDValue(),
-                                                     featureFlag: featureFlag,
+                                                     featureFlag: eventFlag,
                                                      context: context,
                                                      includeReason: needsReason)
             return result
