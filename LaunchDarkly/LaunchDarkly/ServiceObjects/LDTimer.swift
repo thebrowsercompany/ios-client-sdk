@@ -8,7 +8,7 @@ protocol TimeResponding {
 }
 
 #if os(Windows)
-// The Windows Chromium message pump services libdispatch without running Foundation's run loop.
+// Windows hosts can service libdispatch without running Foundation's main run loop.
 final class LDTimer: TimeResponding {
     private let timer: DispatchSourceTimer
     private let lock = NSLock()
