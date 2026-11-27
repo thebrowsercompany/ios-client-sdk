@@ -450,9 +450,9 @@ public struct LDConfig {
     /// LaunchDarkly defined minima for selected configurable items
     public let minima: Minima
 
-    /// An NSObject wrapper for the Swift LDConfig struct. Intended for use in mixed apps when Swift code needs to pass a config into an Objective-C method.
     // The wrapper target is excluded on Windows because Swift cannot import its Objective-C runtime APIs.
     #if !os(Windows)
+    /// An NSObject wrapper for the Swift LDConfig struct. Intended for use in mixed apps when Swift code needs to pass a config into an Objective-C method.
     public var objcLdConfig: ObjcLDConfig { ObjcLDConfig(self) }
     #endif
 

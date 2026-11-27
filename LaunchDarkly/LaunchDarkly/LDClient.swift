@@ -1013,20 +1013,6 @@ public class LDClient {
     private var notificationTokens: [NSObjectProtocol] = []
     #endif
 
-    /// The hooks the configuration registers, followed by the hooks the plugins contribute. Collected before the init
-    /// identify series opens, so that plugin hooks take part in it.
-    private static func collectHooks(configuration: LDConfig, metadata: EnvironmentMetadata) -> [Hook] {
-        var hooks = Array(configuration.hooks)
-        for plugin in configuration.plugins {
-            do {
-                hooks.append(contentsOf: try plugin.getHooks(metadata: metadata))
-            } catch {
-                os_log("Exception thrown getting hooks for plugin %@. Unable to get hooks, plugin will not be registered.", log: configuration.logger, type: .error, plugin.getMetadata().getName())
-            }
-        }
-        return hooks
-    }
-
     private init(serviceFactory: ClientServiceCreating, configuration: LDConfig, startContext: LDContext?, completion: (() -> Void)? = nil) {
         // Set before the hooks below run, so that the environment a hook is told about is this client's rather than the
         // primary one's.
@@ -1073,32 +1059,7 @@ public class LDClient {
                                                                     lastUpdated: cachedData.lastUpdated,
                                                                     service: service)
 
-        // Windows Swift has no Objective-C selector dispatch, so register block observers for the same
-        // lifecycle and event-source notifications. Weak captures avoid retaining the client via its tokens.
-        #if os(Windows)
-        if let backgroundNotification = SystemCapabilities.backgroundNotification {
-            notificationTokens.append(NotificationCenter.default.addObserver(forName: backgroundNotification, object: nil, queue: nil) { [weak self] _ in
-                self?.didEnterBackground()
-            })
-        }
-        if let foregroundNotification = SystemCapabilities.foregroundNotification {
-            notificationTokens.append(NotificationCenter.default.addObserver(forName: foregroundNotification, object: nil, queue: nil) { [weak self] _ in
-                self?.willEnterForeground()
-            })
-        }
-        notificationTokens.append(NotificationCenter.default.addObserver(forName: Notification.Name(FlagSynchronizer.Constants.didCloseEventSourceName), object: nil, queue: nil) { [weak self] _ in
-            self?.didCloseEventSource()
-        })
-        #else
-        if let backgroundNotification = SystemCapabilities.backgroundNotification {
-            NotificationCenter.default.addObserver(self, selector: #selector(didEnterBackground), name: backgroundNotification, object: nil)
-        }
-        if let foregroundNotification = SystemCapabilities.foregroundNotification {
-            NotificationCenter.default.addObserver(self, selector: #selector(willEnterForeground), name: foregroundNotification, object: nil)
-        }
-
-        NotificationCenter.default.addObserver(self, selector: #selector(didCloseEventSource), name: Notification.Name(FlagSynchronizer.Constants.didCloseEventSourceName), object: nil)
-        #endif
+        observeNotifications()
 
         eventReporter = self.serviceFactory.makeEventReporter(config: configuration, service: service, onSyncComplete: onEventSyncComplete)
         service.resetFlagResponseCache(etag: cachedData.etag)
@@ -1133,6 +1094,51 @@ public class LDClient {
         }
     }
     #endif
+}
+
+extension LDClient {
+    /// The hooks the configuration registers, followed by the hooks the plugins contribute. Collected before the init
+    /// identify series opens, so that plugin hooks take part in it.
+    private static func collectHooks(configuration: LDConfig, metadata: EnvironmentMetadata) -> [Hook] {
+        var hooks = Array(configuration.hooks)
+        for plugin in configuration.plugins {
+            do {
+                hooks.append(contentsOf: try plugin.getHooks(metadata: metadata))
+            } catch {
+                os_log("Exception thrown getting hooks for plugin %@. Unable to get hooks, plugin will not be registered.", log: configuration.logger, type: .error, plugin.getMetadata().getName())
+            }
+        }
+        return hooks
+    }
+
+    private func observeNotifications() {
+        // Windows Swift has no Objective-C selector dispatch, so register block observers for the same
+        // lifecycle and event-source notifications. Weak captures avoid retaining the client via its tokens.
+        #if os(Windows)
+        if let backgroundNotification = SystemCapabilities.backgroundNotification {
+            notificationTokens.append(NotificationCenter.default.addObserver(forName: backgroundNotification, object: nil, queue: nil) { [weak self] _ in
+                self?.didEnterBackground()
+            })
+        }
+        if let foregroundNotification = SystemCapabilities.foregroundNotification {
+            notificationTokens.append(NotificationCenter.default.addObserver(forName: foregroundNotification, object: nil, queue: nil) { [weak self] _ in
+                self?.willEnterForeground()
+            })
+        }
+        notificationTokens.append(NotificationCenter.default.addObserver(forName: Notification.Name(FlagSynchronizer.Constants.didCloseEventSourceName), object: nil, queue: nil) { [weak self] _ in
+            self?.didCloseEventSource()
+        })
+        #else
+        if let backgroundNotification = SystemCapabilities.backgroundNotification {
+            NotificationCenter.default.addObserver(self, selector: #selector(didEnterBackground), name: backgroundNotification, object: nil)
+        }
+        if let foregroundNotification = SystemCapabilities.foregroundNotification {
+            NotificationCenter.default.addObserver(self, selector: #selector(willEnterForeground), name: foregroundNotification, object: nil)
+        }
+
+        NotificationCenter.default.addObserver(self, selector: #selector(didCloseEventSource), name: Notification.Name(FlagSynchronizer.Constants.didCloseEventSourceName), object: nil)
+        #endif
+    }
 }
 
 extension LDClient: TypeIdentifying { }

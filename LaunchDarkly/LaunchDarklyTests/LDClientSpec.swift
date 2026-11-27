@@ -748,6 +748,28 @@ final class LDClientSpec: QuickSpec {
                     }
                 }
             }
+            context("flag value has the wrong type") {
+                it("records the fallback metadata and preserves the stored flag") {
+                    let flag = FeatureFlag(flagKey: "wrong-type-flag", value: .string("enabled"), variation: 0,
+                                           version: 5, flagVersion: 7, trackEvents: true,
+                                           debugEventsUntilDate: .distantFuture, reason: ["kind": "OFF"], trackReason: true)
+                    testContext.flagStoreMock.replaceStore(newStoredItems: StoredItems(items: [flag.flagKey: flag]))
+
+                    let result = testContext.subject.boolVariationDetail(forKey: flag.flagKey, defaultValue: false)
+                    let eventFlag = testContext.eventReporterMock.recordFlagEvaluationEventsReceivedArguments?.featureFlag
+
+                    expect(result.value) == false
+                    expect(result.reason?["errorKind"]) == .string("WRONG_TYPE")
+                    expect(eventFlag).toNot(beNil())
+                    expect(eventFlag?.variation).to(beNil())
+                    expect(eventFlag?.reason) == result.reason
+                    expect(eventFlag?.versionForEvents) == 7
+                    expect(eventFlag?.trackEvents) == true
+                    expect(eventFlag?.trackReason) == true
+                    expect(eventFlag?.debugEventsUntilDate) == flag.debugEventsUntilDate
+                    expect(testContext.flagStoreMock.storedItems.featureFlags[flag.flagKey]) == flag
+                }
+            }
             context("flag store does not contain the requested value") {
                 context("non-Optional default value") {
                     it("returns the default value") {
