@@ -11,7 +11,7 @@ var launchDarklyExcludes = ["Support"]
 launchDarklyExcludes.append("ObjectiveC")
 #endif
 
-let launchDarklyTargets: [Target] = [
+var launchDarklyTargets: [Target] = [
     .target(
         name: "LaunchDarkly",
         dependencies: launchDarklyDependencies,
@@ -20,6 +20,16 @@ let launchDarklyTargets: [Target] = [
         resources: [
             .process("PrivacyInfo.xcprivacy")
         ]),
+]
+
+#if os(Windows)
+launchDarklyTargets.append(
+    .testTarget(
+        name: "LaunchDarklyWindowsTests",
+        dependencies: ["LaunchDarkly"],
+        path: "Tests/Windows"))
+#else
+launchDarklyTargets.append(
     .testTarget(
         name: "LaunchDarklyTests",
         dependencies: [
@@ -31,8 +41,8 @@ let launchDarklyTargets: [Target] = [
         ],
         path: "LaunchDarkly",
         exclude: ["LaunchDarklyTests/Info.plist", "LaunchDarklyTests/.swiftlint.yml"],
-        sources: ["GeneratedCode", "LaunchDarklyTests"]),
-]
+        sources: ["GeneratedCode", "LaunchDarklyTests"]))
+#endif
 let package = Package(
     name: "LaunchDarkly",
     platforms: [
